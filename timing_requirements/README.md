@@ -1,6 +1,10 @@
 Timing Requirements
 -----------------
-The requirements are outlined in the ILX526A documentation. For the sake of completeness, the signals coming out of the Uno were measured. The pictures of the scope traces are in their respective folders.
+The requirements are outlined in the ILX526A documentation. For the sake of completeness, the signals coming out of the Uno were measured. The pictures of the scope traces are in their respective folders. The color scheme is as follows
+* Channel 1 (yellow): ROG
+* Channel 2 (cyan): SHUT
+* Channel 3 (magenta): CCD CLK
+* Channel 4 (green): ADC CLK
 
 For the tables below, a CCD clock period of 1 microsecond is assumed (1 MHz freq.)
 
