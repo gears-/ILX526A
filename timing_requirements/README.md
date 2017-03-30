@@ -1,7 +1,8 @@
 Timing Requirements
 -----------------
-The requirements are outlined in the ILX526A documentation. For the sake of completeness, the signals coming out of the Uno were measured.
-A CCD clock period of 1 microsecond is assumed (1 MHz freq.)
+The requirements are outlined in the ILX526A documentation. For the sake of completeness, the signals coming out of the Uno were measured. The pictures of the scope traces are in their respective folders.
+
+For the tables below, a CCD clock period of 1 microsecond is assumed (1 MHz freq.)
 
 | ROG Requirement | Symbol | Min. | Typ. | Max. | Measured | Units |
 |:-----------:|:------:|:----:|:----:|:----:|:--------:|:-----:|
@@ -28,3 +29,5 @@ This simply means that the minimum period at 1 MHz is going to be 3.1 ms (or 3,1
 |:-----------:|:------:|:----:|:----:|:----:|:--------:|:-----:|
 | SHUT to ROG | t16 | 10 | --- | --- | 34 | uS |
 | ROG period | --- | 3100 | --- | --- | 3112 | uS |
+
+
