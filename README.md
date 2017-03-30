@@ -28,3 +28,5 @@ Direct port manipulation of PORTD is used to
 
 This is a work in progress. The driving board may change from an Arduino to other micro-controllers.
 
+-----------------
+The code was inspired by Dave Allmon's [fast 16-bit spectrometer](http://davidallmon.com/pages/ad7667-spectrograph).
