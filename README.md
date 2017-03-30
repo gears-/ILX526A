@@ -1,8 +1,7 @@
 ILX526A
 ------
-The code in this repository is used to drive an ILX526A CCD array with an Arduino Uno. It assumes that the CCD array operations in S/H mode, at max speed (1 MHz).
+The code in this repository is used to drive an ILX526A CCD array with an Arduino Uno. It assumes that the CCD array operates in the S/H mode, at max speed (1 MHz).
 The ILX526A documentation that details the timing requirements can be found [here](http://www.eureca.de/datasheets/01.xx.xxxx/01.01.xxxx/01.01.0021/ILX526A.pdf) 
-
 An additional clock at 4 MHz is generated to drive an ADC external to the CCD array. 
 
 The 4 MHz and 1 MHz clocks are generated using timer0 and timer2, respectively. 
@@ -14,6 +13,7 @@ Direct port manipulation of PORTD is used to
 2. ensure simplicity (digital ports 0 through 7 only are used). 
 
  The pin assignment on the Uno is as follows
+
 | Digital Pin | Function | 
 |:-------------: |:-------------:| 
 | PD0 | NC |
