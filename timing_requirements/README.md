@@ -21,6 +21,7 @@ A CCD clock period of 1 microsecond is assumed (1 MHz freq.)
 The requirement to have ROG to SHUT be more than 10 uS is automatically fulfilled by waiting for all the pixels to be grabbed from the CCD.
 The ROG period is derived from the clock timing on pp.4-5 in the documentation
 > 3100 or more clock pulses are required  
+
 This simply means that the minimum period at 1 MHz is going to be 3.1 ms (or 3,100 uS). 
 
 | Other Requirements | Symbol | Min. | Typ. | Max. | Measured | Units |
