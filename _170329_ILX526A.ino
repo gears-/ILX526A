@@ -33,6 +33,7 @@ void setup()
    TCCR2A = 0;
    TCCR2B = 0;
    TIMSK2 = 0;
+   TCNT2 = 0;
 
    // CTC Mode, enable output on OCR2B
    TCCR2A = bit(COM2B0) | bit(WGM21);
