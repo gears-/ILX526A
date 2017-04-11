@@ -1,6 +1,10 @@
-void setup() {
-  // put your setup code here, to run once:
+#include "setup_clk.h"
+#include "setup_dma.h"
 
+
+void setup() {
+    setup_dma();
+    setup_clk()
 }
 
 void loop() {
