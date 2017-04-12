@@ -3,8 +3,15 @@
 
 
 void setup() {
+    // Empty buffers
+
+    // Setup DMA
     setup_dma();
-    setup_clk()
+
+    // Setup clocks
+    setup_clk();
+
+    // Setup ISR
 }
 
 void loop() {

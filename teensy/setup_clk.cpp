@@ -1,3 +1,4 @@
+#include "Arduino.h"
 #include "setup_clk.h"
 
 void ccd_clk() {
@@ -32,8 +33,7 @@ void ccd_clk() {
     FTM1_MOD = 59;
     
     // Pin configuration - no slew rate
-    CORE_PIN3_CONFIG = PORT_PCR_MUX(4) | PORT_PCR_DSE;
-
+    CORE_PIN3_CONFIG = PORT_PCR_MUX(3) | PORT_PCR_DSE;
 
 }
 
@@ -69,13 +69,10 @@ void adc_clk() {
     FTM2_CNT = 0;
 
     // Timer period
-    FTM2_MOD = 5;
+    FTM2_MOD = 9;
     
     // Pin configuration - no slew rate
     CORE_PIN32_CONFIG = PORT_PCR_MUX(3) | PORT_PCR_DSE;
-
-    // Enable DMA requests for FTM2
-    //CORE_PIN32_CONFIG |= PORT_PCR_IRQC(1);
 }
 
 
@@ -132,6 +129,6 @@ void pwm_clk() {
 void setup_clk() {
     ccd_clk();
     adc_clk();
-    pwn_clk();
+    pwm_clk();
 }   
 
