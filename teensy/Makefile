@@ -117,8 +117,14 @@ AR = $(abspath $(COMPILERPATH))/arm-none-eabi-ar
 LC_FILES := $(wildcard $(LIBRARYPATH)/*/*.c)
 LC_FILES += $(wildcard $(LIBRARYPATH)/*.c)
 
+LC_FILES := $(filter-out $(LIBRARYPATH)/main.c, $(LC_FILES))
+LC_FILES := $(filter-out $(LIBRARYPATH)/*/main.c, $(LC_FILES))
+
 LCPP_FILES := $(wildcard $(LIBRARYPATH)/*/*.cpp)
 LCPP_FILES += $(wildcard $(LIBRARYPATH)/*.cpp)
+
+LCPP_FILES := $(filter-out $(LIBRARYPATH)/main.cpp, $(LCPP_FILES))
+LCPP_FILES := $(filter-out $(LIBRARYPATH)/*/main.cpp, $(LCPP_FILES))
 
 TC_FILES := $(wildcard $(COREPATH)/*.c)
 TCPP_FILES := $(wildcard $(COREPATH)/*.cpp)
@@ -165,8 +171,7 @@ reboot:
 upload: loader_cli
 
 loader_cli: $(TARGET).hex
-	$(LOADERPATH)/teensy_loader_cli --mcu=$(MCU) -w /opt/teensy/teensy_loader_cli/blink_slow_Teensy32.hex 
-
+	$(LOADERPATH)/teensy_loader_cli -mmcu=$(MCU) -w $< -v 
 
 # Compile C, C++, and INO files
 $(BUILDDIR)/%.o: %.c
