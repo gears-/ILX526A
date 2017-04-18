@@ -145,10 +145,11 @@ L_INC += -I$(LIBRARYPATH)
 ## Object files
 SOURCES := $(C_FILES:.c=.o) $(CPP_FILES:.cpp=.o) $(INO_FILES:.ino=.o) $(TC_FILES:.c=.o) $(TCPP_FILES:.cpp=.o) $(LC_FILES:.c=.o) $(LCPP_FILES:.cpp=.o)
 
-USER_OBJS := $(C_FILES:.c=.o) $(CPP_FILES:.cpp=.o) $(INO_FILES:.ino=.o)
+USER_SRC := $(C_FILES:.c=.o) $(CPP_FILES:.cpp=.o) $(INO_FILES:.ino=.o)
 CORE_SRC := $(TC_FILES:.c=.o) $(TCPP_FILES:.cpp=.o) $(LC_FILES:.c=.o) $(LCPP_FILES:.cpp=.o)
 
 CORE_OBJS := $(foreach src, $(CORE_SRC), $(BUILDDIR)/$(src))
+USER_OBJS := $(foreach src, $(USER_SRC), $(BUILDDIR)/$(src))
 
 OBJS := $(foreach src,$(SOURCES), $(BUILDDIR)/$(src))
 
@@ -194,9 +195,10 @@ $(CORE_LIBS):
 	$(AR) rcs $@ $(CORE_OBJS)
 
 # Create the HEX, ELF files
+	#$(CC) $(LDFLAGS) -o "$@" $(OBJS) $(LIBS) $(CORE_LIBS) 
 $(TARGET).elf: $(OBJS) $(CORE_LIBS)
 	@echo -e "[LD]\t$@"
-	$(CC) $(LDFLAGS) -o "$@" $(OBJS) $(LIBS) $(CORE_LIBS) 
+	$(CC) $(LDFLAGS) -o "$@" $(USER_OBJS) $(LIBS) $(CORE_LIBS) 
 
 %.hex: %.elf
 	@echo -e "[HEX]\t$@"
