@@ -1,17 +1,20 @@
-#include "DMAChannel.h"
-#include "Arduino.h"
 #include "setup_dma.h"
 
-// Number of ADC bits
-#define NBIT 12
-
 // List of pins mapped to the ADC output
-uint8_t portc_pins[NBIT] = {15,22,23,9,10,13,11,12,28,27,29,30};
+uint8_t const portc_pins[NBIT] = {15,22,23,9,10,13,11,12,28,27,29,30};
 
 // ADC Mask
 static uint8_t adc_stop = 0xFF;
 static uint8_t adc_start = 0x00;
 
+// External variables shared across multiple files
+// Pixel buffer
+volatile uint16_t pix_buffer[6*(NPIX+100)];
+
+// DMA Channels
+DMAChannel dma_portc; // DMA for reading PORTC
+DMAChannel dma_adc_start; // DMA to start the ADC
+DMAChannel dma_adc_stop; // DMA to stop the ADC
 
 /* Function: setup_dma_portc
  * Description: sets the DMA request for transferring data from PORTC to the hold buffer 

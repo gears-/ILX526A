@@ -9,8 +9,8 @@
 #include "setup_dma.h"
 #include "setup_isr.h"
 
-#define NSAMPLES 1
-#define DUMMY_DELTA (6*57)
+volatile float buffer_send[NPIX];
+volatile uint8_t nsamples_gathered;
  
 void setup_shut_isr() {
     // Enable ISR on falling edge of pin 6 (SHUT)
@@ -19,7 +19,8 @@ void setup_shut_isr() {
     // Enable PORTD interrupts in the NVIC table
     NVIC_ENABLE_IRQ(IRQ_PORTD);
   
-}extern volatile uint16_t pix_buffer[6*(NPIX+100)];
+}
+//extern volatile uint16_t pix_buffer[6*(NPIX+100)];
 
 void portd_isr() {
   // Clear interrupts on PORTD

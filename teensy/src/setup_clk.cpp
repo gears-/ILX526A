@@ -80,7 +80,7 @@ void pwm_clk() {
     // Halt timers
     FTM0_SC = 0;
 
-    // Count at which switch occurs
+    // Count that corresponds to when switch occurs
     FTM0_C2V = 2;
     FTM0_C3V = 152;
 
@@ -122,7 +122,7 @@ void pwm_clk() {
     CORE_PIN6_CONFIG = PORT_PCR_MUX(4) | PORT_PCR_DSE;
     CORE_PIN24_CONFIG = PORT_PCR_MUX(3) | PORT_PCR_DSE;
 
-    // Initiate GTB
+    // Initiate Global Time Base 
     FTM0_CONF |= FTM_CONF_GTBEOUT;
 }
 
