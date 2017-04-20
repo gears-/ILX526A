@@ -29,7 +29,7 @@ DMAChannel dma_adc_stop; // DMA to stop the ADC
 void setup_dma_portc() {
     // Define all of our inputs
     for(int idx = 0; idx < NBIT; ++idx) {
-        pinMode(portc_pins[idx],INPUT);
+        pinMode(portc_pins[idx],OUTPUT);
     }    
 
     // Enable DMA requests for FTM2, on the rising edge of port 32
@@ -55,7 +55,7 @@ void setup_dma_portc() {
     // Since PORTB only has the ADC clock running, we can trigger on all of port B (how convenient is that?)
     // Having a DMA on the falling edge allows for data to be valid
     dma_portc.triggerAtHardwareEvent(DMAMUX_SOURCE_PORTB);
-    dma_portc.enable();
+//    dma_portc.enable();
 
 }
 
@@ -138,13 +138,41 @@ void setup_dma_clock_stop() {
  * Once the transfer is done, an ISR is raised so that serial operation can be done
  */
 DMAChannel dma_buffer_transfer;
+uint32_t dummy = 196609;
 void setup_dma_buffer_transfer() {
 
-//    for(int i = 0;i<NPIX+100;++i)
-//        pix_buffer[i] = NPIX+100-i;
+//    dma_buffer_transfer.sourceBuffer(pix_buffer,2*(NPIX+100));
+//    dma_buffer_transfer.destinationBuffer(pix_data,2*(NPIX+100));
+//
 
-    dma_buffer_transfer.sourceBuffer(pix_buffer,2*(NPIX+100));
-    dma_buffer_transfer.destinationBuffer(pix_data,2*(NPIX+100));
+    for(int i = 0;i<NPIX+100;++i) {
+        pix_buffer[i] = NPIX+100-i;
+        pix_data[i] = 0;
+    }
+
+    dma_buffer_transfer.source(pix_buffer[0]);
+    dma_buffer_transfer.destination(pix_data[0]);
+
+    //dma_buffer_transfer.transferSize(2*4);
+    //dma_buffer_transfer.transferCount(1);
+    dma_buffer_transfer.TCD->NBYTES = 2*(NPIX+100);
+    dma_buffer_transfer.TCD->CITER  = 1;
+    dma_buffer_transfer.TCD->BITER  = 1;
+    dma_buffer_transfer.TCD->SOFF = 2;
+    dma_buffer_transfer.TCD->DOFF = 2;
+    dma_buffer_transfer.TCD->ATTR_SRC = 1; 
+    dma_buffer_transfer.TCD->ATTR_DST = 1; 
+    dma_buffer_transfer.TCD->SLAST = -2*(NPIX+100);
+    dma_buffer_transfer.TCD->DLASTSGA = -2*(NPIX+100);
+
+
+//    dma_buffer_transfer.transferSize(2*(NPIX+100));
+//    dma_buffer_transfer.transferCount(1);
+
+//    dma_buffer_transfer.source(dummy);
+//    dma_buffer_transfer.destination(dummy);
+//    dma_buffer_transfer.transferSize(1);
+//    dma_buffer_transfer.transferCount(1);
 
     dma_buffer_transfer.triggerAtCompletionOf(dma_adc_stop);
     dma_buffer_transfer.interruptAtCompletion();
@@ -161,18 +189,8 @@ uint32_t tic,toc;
 
 void setup_isr_buffer_transfer() {
 
-//    uint32_t len = (NPIX+100)*sizeof(uint16_t);
-//    for(int i = 0;i<NPIX+100;++i)
-//
-//        pix_data[i] = i%256;
-
-//    uint32_t len = (NPIX+100)*sizeof(uint8_t);
-//    for(int i = 0;i<NPIX+100;++i)
-//        pix_data[i] = i;
-
+    digitalWrite(15,HIGH);
     dma_buffer_transfer.clearInterrupt();
-//    reset_dma_portc();
-    //dma_buffer_transfer.detachInterrupt();
 
     tic = micros();
     Serial.flush();
@@ -181,6 +199,7 @@ void setup_isr_buffer_transfer() {
     Serial.write("\n");
 
     Serial.write((const uint8_t*)pix_data, 2*(NPIX+100));
+//    Serial.write((const uint8_t*)pix_data,4);
     Serial.write("\n");
     Serial.send_now();
 
@@ -189,6 +208,7 @@ void setup_isr_buffer_transfer() {
     Serial.write((const uint8_t*)&toc,4);
     Serial.write("\n");
     Serial.send_now();
+    digitalWrite(15,LOW);
 
     //dma_buffer_transfer.disable();
 }

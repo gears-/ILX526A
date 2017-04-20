@@ -31,7 +31,9 @@ while True:
     print "RESPONSE BELOW"
     #response = ser.readline()
     response = ser.read(2*3100)
+    #response = ser.read(2*2)
     discard = ser.read(1)
+
     delay = ser.read(4)
     discard = ser.read(1)
     response = np.frombuffer(response,np.uint16)
