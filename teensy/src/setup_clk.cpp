@@ -16,6 +16,7 @@ void ccd_clk() {
     // MSNB, MSNA = 10 -> edge aligned PWM
     // ELSB, ELSA = 10 -> high-true pulses
     FTM1_C0SC = FTM_CSC_MSB | FTM_CSC_ELSA;    
+    FTM1_C0SC |= FTM_CSC_DMA | FTM_CSC_CHIE;
 
     // Set initial count
     FTM1_CNTIN = 0;
@@ -42,7 +43,8 @@ void adc_clk() {
     FTM2_SC = 0;
 
     // Count at which switch occurs
-    FTM2_C0V = 5;
+    //FTM2_C0V = 5;
+    FTM2_C0V = 30;
 
     // See table p783
     // This config yields edge aligned PWM with high-true pulses
@@ -69,10 +71,14 @@ void adc_clk() {
     FTM2_CNT = 0;
 
     // Timer period
-    FTM2_MOD = 9;
+    //FTM2_MOD = 9;
+    FTM2_MOD = 59;
     
     // Pin configuration - no slew rate
     CORE_PIN32_CONFIG = PORT_PCR_MUX(3) | PORT_PCR_DSE;
+
+    // We mask the ADC clock until it is triggered
+    FTM2_OUTMASK = 0xFF;
 }
 
 
@@ -101,7 +107,8 @@ void pwm_clk() {
 
     // Enable DMA requests from FTM
     FTM0_C2SC |= FTM_CSC_DMA | FTM_CSC_CHIE;
-    FTM0_C4SC |= FTM_CSC_DMA | FTM_CSC_CHIE;
+    //FTM0_C4SC |= FTM_CSC_DMA | FTM_CSC_CHIE;
+    FTM0_C4SC |= FTM_CSC_CHIE;
 
     // Set initial counter
     FTM0_CNTIN = 0;
@@ -119,8 +126,8 @@ void pwm_clk() {
     FTM0_MOD = 47249;
     
     // Pin configuration - no slew rate
-    CORE_PIN6_CONFIG = PORT_PCR_MUX(4) | PORT_PCR_DSE;
-    CORE_PIN24_CONFIG = PORT_PCR_MUX(3) | PORT_PCR_DSE;
+    CORE_PIN6_CONFIG |= PORT_PCR_MUX(4) | PORT_PCR_DSE;
+    CORE_PIN24_CONFIG |= PORT_PCR_MUX(3) | PORT_PCR_DSE;
 
     // Initiate Global Time Base 
     FTM0_CONF |= FTM_CONF_GTBEOUT;

@@ -7,14 +7,10 @@
 #define DUMMY_DELTA (6*57)
 
 // External variables; these are defined in setup_dma.cpp
-extern volatile uint16_t pix_buffer[6*(NPIX+100)];
-extern DMAChannel dma_adc_start; // DMA to start the ADC
-extern DMAChannel dma_adc_stop;
-extern DMAChannel dma_portc;
-
+extern volatile uint16_t pix_buffer[NPIX+100];
+extern volatile uint16_t pix_data[NPIX+100];
 
 // Function declaration
-void portd_isr();
-void setup_shut_isr();
+void setup_isr();
 
 #endif
