@@ -189,7 +189,6 @@ uint32_t tic,toc;
 
 void setup_isr_buffer_transfer() {
 
-    digitalWrite(15,HIGH);
     dma_buffer_transfer.clearInterrupt();
 
     tic = micros();
@@ -208,7 +207,6 @@ void setup_isr_buffer_transfer() {
     Serial.write((const uint8_t*)&toc,4);
     Serial.write("\n");
     Serial.send_now();
-    digitalWrite(15,LOW);
 
     //dma_buffer_transfer.disable();
 }
