@@ -18,22 +18,20 @@ SOT_TEST = "7eae261d-dde2-a293-a7cd17e4379a7eae261d-dde2-a293-a7cd17e4379aZ\n"
 #    pass 
 
 # Discard all of the stuff that made it to the serial port before we actually read it
-ser.flushInput()
 totdel = 0.0
 NSAMPLES = 1000
-for i in range(1,NSAMPLES):
+ser.flushInput()
+while True:
     # Wait for the start of transmission
     start = ser.readline()
     while start != SOT:
-        #print start 
+        print start 
         start = ser.readline()
         pass
 
     #discard = ser.read(2)
-    #print "RESPONSE BELOW"
-    #response = ser.readline()
+    print "RESPONSE BELOW"
     response = ser.read(2*3100)
-    #response = ser.read(2*2)
     discard = ser.read(1)
 
     delay = ser.read(4)
@@ -42,14 +40,14 @@ for i in range(1,NSAMPLES):
     response = np.frombuffer(response,np.uint16)
     #np.savetxt('test.dat',response,fmt='%d')
 
-    #print response
-    #print response.size
-    #print np.frombuffer(delay,np.uint32)
+    print response
+    print response.size
+    print np.frombuffer(delay,np.uint32)
 
-totdel /= NSAMPLES
-print "Average time (us): ",totdel
-print "Bandwidth (MB/s): ", (2.*3100.+37.+1.+4.+1.)/totdel
-print "Bandwidth (Mb/s): ", 8*(2.*3100.+37.+1.+4.+1.)/totdel
+#totdel /= NSAMPLES
+#print "Average time (us): ",totdel
+#print "Bandwidth (MB/s): ", (2.*3100.+37.+1.+4.+1.)/totdel
+#print "Bandwidth (Mb/s): ", 8*(2.*3100.+37.+1.+4.+1.)/totdel
 
 # Wait for the start of transmission
 #start = ser.readline()

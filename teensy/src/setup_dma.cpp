@@ -8,18 +8,15 @@ uint8_t const portc_pins[NBIT] = {15,22,23,9,10,13,11,12,28,27,29,30};
 volatile uint8_t adc_stop = 0xFF;
 volatile uint8_t adc_start = 0x00;
 
-// External variables shared across multiple files
-// Pixel buffer
-volatile uint16_t pix_data[NPIX+100];
-volatile uint16_t pix_buffer[NPIX+100];
-volatile uint8_t pix_test[NPIX+100];
-
 // DMA Channels
 DMAChannel dma_portc; // DMA for reading PORTC
 DMAChannel dma_adc_start; // DMA to start the ADC
 DMAChannel dma_adc_stop; // DMA to stop the ADC
-//DMAChannel dma_ftm0_stop; // DMA to stop the FTM0 clocks
-//DMAChannel dma_ftm1_stop; // DMA to stop the FTM1 clocks
+
+volatile uint8_t send_data = 0x00;
+volatile uint16_t pix_data[NPIX+100] = {0};
+volatile uint16_t pix_buffer[NPIX+100] = {0};
+volatile uint16_t pix_sum[2*(NPIX+100)] = {0};
 
 /* Function: setup_dma_portc
  * Description: sets the DMA request for transferring data from PORTC to the hold buffer 
@@ -59,12 +56,12 @@ void setup_dma_portc() {
 
 }
 
-void reset_dma_portc() {
-    dma_portc.disable();
-    dma_portc.source(GPIOC_PDIR);
-    dma_portc.destination(pix_buffer[0]);
-    dma_portc.enable();
-}    
+//void reset_dma_portc() {
+//    dma_portc.disable();
+//    dma_portc.source(GPIOC_PDIR);
+ //   dma_portc.destination(pix_buffer[0]);
+//    dma_portc.enable();
+//}    
 
 
 /* 
@@ -134,82 +131,80 @@ void setup_dma_clock_stop() {
 /*
  * Function: setup_dma_buffer_transfer
  * Description: enables a DMA transfer that triggers when the ADC is shut down. 
- * The transfer moves data from our temporary buffer to the buffer to send to our host
- * Once the transfer is done, an ISR is raised so that serial operation can be done
+ * The transfer moves the raw data gathered into pix_buffer into a staging buffer.
+ * The staging buffer is twice the size of pix_buffer so that it can average two complete samples.
+ * Once the transfer is done, an ISR is raised so that averaging can be triggered, and data can be sent away. 
  */
 DMAChannel dma_buffer_transfer;
-uint32_t dummy = 196609;
+DMAChannel dma_enable_send;
+uint8_t trig_send_data = 0x01;
 void setup_dma_buffer_transfer() {
-
-//    dma_buffer_transfer.sourceBuffer(pix_buffer,2*(NPIX+100));
-//    dma_buffer_transfer.destinationBuffer(pix_data,2*(NPIX+100));
-//
 
     for(int i = 0;i<NPIX+100;++i) {
         pix_buffer[i] = NPIX+100-i;
         pix_data[i] = 0;
     }
 
-    dma_buffer_transfer.source(pix_buffer[0]);
-    dma_buffer_transfer.destination(pix_data[0]);
+    for(int i = 0;i<2*(NPIX+100);++i)
+        pix_sum[i] = 0;
 
-    //dma_buffer_transfer.transferSize(2*4);
-    //dma_buffer_transfer.transferCount(1);
+    dma_buffer_transfer.source(pix_buffer[0]);
+    dma_buffer_transfer.destination(pix_sum[0]);
+    //dma_buffer_transfer.destination(pix_data[0]);
+
+    // Set up 2 transfers of uint16_t array of size NPIX+100
+    // Corresponds to 2*2*(NPIX+100) bytes
     dma_buffer_transfer.TCD->NBYTES = 2*(NPIX+100);
-    dma_buffer_transfer.TCD->CITER  = 1;
-    dma_buffer_transfer.TCD->BITER  = 1;
+    dma_buffer_transfer.TCD->CITER  = 2;
+    dma_buffer_transfer.TCD->BITER  = 2;
     dma_buffer_transfer.TCD->SOFF = 2;
     dma_buffer_transfer.TCD->DOFF = 2;
     dma_buffer_transfer.TCD->ATTR_SRC = 1; 
     dma_buffer_transfer.TCD->ATTR_DST = 1; 
     dma_buffer_transfer.TCD->SLAST = -2*(NPIX+100);
-    dma_buffer_transfer.TCD->DLASTSGA = -2*(NPIX+100);
+    dma_buffer_transfer.TCD->DLASTSGA = -4*(NPIX+100);
 
-
-//    dma_buffer_transfer.transferSize(2*(NPIX+100));
-//    dma_buffer_transfer.transferCount(1);
-
-//    dma_buffer_transfer.source(dummy);
-//    dma_buffer_transfer.destination(dummy);
-//    dma_buffer_transfer.transferSize(1);
-//    dma_buffer_transfer.transferCount(1);
-
+    // The DMA triggers when the ADC stops 
     dma_buffer_transfer.triggerAtCompletionOf(dma_adc_stop);
-    dma_buffer_transfer.interruptAtCompletion();
-    dma_buffer_transfer.attachInterrupt(setup_isr_buffer_transfer);
+
+    // Enables an interrupt at half to reset the source address...
+    // There may be a more elegant way to do that
+    dma_buffer_transfer.interruptAtHalf();
+    dma_buffer_transfer.attachInterrupt(isr_buffer_transfer_src_reset);
 
     dma_buffer_transfer.enable();
+
+    dma_enable_send.source(trig_send_data);
+    dma_enable_send.destination(send_data);
+    dma_enable_send.transferSize(1);
+    dma_enable_send.transferCount(1);
+    dma_enable_send.triggerAtCompletionOf(dma_buffer_transfer);
+
+//    dma_enable_send.interruptAtCompletion();
+//    dma_enable_send.attachInterrupt(isr_buffer_transfer);
+
+    dma_enable_send.enable();
 }
+
+void isr_buffer_transfer_src_reset() {
+    dma_buffer_transfer.clearInterrupt();
+    dma_buffer_transfer.TCD->SADDR = &pix_buffer[0];
+}
+
+//void isr_buffer_transfer() {
+//    dma_enable_send.clearInterrupt();
+//    Serial.print("ISR from DMA\n");
+//}
+
 
 /* 
  * Function: setup_isr_buffer_transfer
- * Description: defines the tasks at hand when the data is staged for transfer to the host
+ * Description: clears the interrupt raised by the DMA transfer, then sets a flag that tells the main program to send data away 
  */
-uint32_t tic,toc;
-
-void setup_isr_buffer_transfer() {
-
-    dma_buffer_transfer.clearInterrupt();
-
-    tic = micros();
-    Serial.flush();
-
-    Serial.write(SOT,36); 
-    Serial.write("\n");
-
-    Serial.write((const uint8_t*)pix_data, 2*(NPIX+100));
-//    Serial.write((const uint8_t*)pix_data,4);
-    Serial.write("\n");
-    Serial.send_now();
-
-    toc = micros();
-    toc -= tic;
-    Serial.write((const uint8_t*)&toc,4);
-    Serial.write("\n");
-    Serial.send_now();
-
-    //dma_buffer_transfer.disable();
-}
+//void isr_buffer_transfer() {
+//    dma_buffer_transfer.clearInterrupt();
+//    send_data = true;
+//}
 
 
 
