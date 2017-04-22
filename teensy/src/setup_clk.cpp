@@ -133,9 +133,24 @@ void pwm_clk() {
     FTM0_CONF |= FTM_CONF_GTBEOUT;
 }
 
+void pit0_setup() {
+    // PIT clock gate enabled
+    SIM_SCGC6 |= SIM_SCGC6_PIT;
+
+    // PIT module enabled
+    PIT_MCR = 0;
+
+    // write 1 to clean timer interrupt flag
+    PIT_TFLG0 = PIT_TFLG_TIF;
+
+    // set timer 0 for 15 cycles
+    PIT_LDVAL0 = 480000; 
+}
+
 void setup_clk() {
     ccd_clk();
     adc_clk();
     pwm_clk();
+    pit0_setup();
 }   
 

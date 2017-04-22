@@ -9,14 +9,94 @@ volatile uint8_t adc_stop = 0xFF;
 volatile uint8_t adc_start = 0x00;
 
 // DMA Channels
+DMAChannel dma_exposure_cnt;
+DMAChannel dma_exposure_cnt_start; // DMA for the exposure time
 DMAChannel dma_portc; // DMA for reading PORTC
 DMAChannel dma_adc_start; // DMA to start the ADC
 DMAChannel dma_adc_stop; // DMA to stop the ADC
+DMAChannel dma_buffer_transfer;
+DMAChannel dma_enable_send;
 
 volatile uint8_t send_data = 0x00;
 volatile uint16_t pix_data[NPIX+100] = {0};
 volatile uint16_t pix_buffer[NPIX+100] = {0};
 volatile uint16_t pix_sum[2*(NPIX+100)] = {0};
+
+// This on just transfers dummy data when PIT0 triggers it
+void isr_dma_exposure_cnt() {
+
+    dma_exposure_cnt.clearInterrupt();
+//If using the PIT to trigger a DMA channel where the major loop count is set to one, then in
+//order to get the desired periodic triggering, the DMA must do the following in the interrupt
+//service routine for the DMA_DONE interrupt:
+//1. Set the DMA_TCDn_CSR[DREQ] bit and configure DMAMUX_CHCFGn[ENBL] = 0
+//2. Then again DMAMUX_CHCFGn[ENBL] = 1, DMASREQ=channel in your DMA DONE
+//interrupt service routine so that "always enabled" source could negate its request then DMA
+//request could be negated.
+//This will allow the desired periodic triggering to function as expected.
+    Serial.print("DMA Exposure CNT\n");
+    //dma_exposure_cnt.disableOnCompletion();
+    DMAMUX0_CHCFG0 &= ~DMAMUX_ENABLE;
+
+    DMAMUX0_CHCFG0 |= DMAMUX_ENABLE;
+
+    // Disable the PIT timer
+    PIT_TCTRL0 &= ~PIT_TCTRL_TEN;
+
+    // restart the clocks
+    ccd_clk();
+    adc_clk();
+    pwm_clk();
+    FTM1_OUTMASK = 0x00;
+    FTM0_OUTMASK = 0x00;
+    FTM2_OUTMASK = 0x00;
+}
+
+
+uint8_t dummy = 0x00;
+void setup_dma_exposure_cnt() {
+    dma_exposure_cnt.source(dummy);
+    dma_exposure_cnt.destination(dummy);
+
+    dma_exposure_cnt.transferSize(1);
+    dma_exposure_cnt.transferCount(1);
+
+    DMAMUX0_CHCFG0 |= DMAMUX_ENABLE | DMAMUX_TRIG | DMAMUX_SOURCE_ALWAYS0;
+
+    dma_exposure_cnt.interruptAtCompletion();
+    dma_exposure_cnt.attachInterrupt(isr_dma_exposure_cnt);
+    dma_exposure_cnt.enable();
+
+}
+
+void isr_dma_exposure_cnt_start() {
+    dma_exposure_cnt_start.clearInterrupt();
+//    Serial.print("DMA Exposure CNT start\n");
+
+    // Stop the clocks
+    FTM1_OUTMASK = 0xFF;
+    FTM0_OUTMASK = 0xFF;
+    FTM2_OUTMASK = 0xFF;
+ //   FTM0_SC = 0;
+ //   FTM1_SC = 0;
+ //   FTM2_SC = 0;
+}    
+
+uint8_t cnt_start = 0x01;
+void setup_dma_exposure_cnt_start() {
+    dma_exposure_cnt_start.source(cnt_start);
+    dma_exposure_cnt_start.destination(PIT_TCTRL0);
+    dma_exposure_cnt_start.transferSize(1);
+    dma_exposure_cnt_start.transferCount(1);
+
+    dma_exposure_cnt_start.triggerAtCompletionOf(dma_adc_stop);
+
+    dma_exposure_cnt_start.interruptAtCompletion();
+    dma_exposure_cnt_start.attachInterrupt(isr_dma_exposure_cnt_start);
+    dma_exposure_cnt_start.enable();
+}
+
+
 
 /* Function: setup_dma_portc
  * Description: sets the DMA request for transferring data from PORTC to the hold buffer 
@@ -135,8 +215,6 @@ void setup_dma_clock_stop() {
  * The staging buffer is twice the size of pix_buffer so that it can average two complete samples.
  * Once the transfer is done, an ISR is raised so that averaging can be triggered, and data can be sent away. 
  */
-DMAChannel dma_buffer_transfer;
-DMAChannel dma_enable_send;
 uint8_t trig_send_data = 0x01;
 void setup_dma_buffer_transfer() {
 
@@ -155,17 +233,20 @@ void setup_dma_buffer_transfer() {
     // Set up 2 transfers of uint16_t array of size NPIX+100
     // Corresponds to 2*2*(NPIX+100) bytes
     dma_buffer_transfer.TCD->NBYTES = 2*(NPIX+100);
-    dma_buffer_transfer.TCD->CITER  = 2;
-    dma_buffer_transfer.TCD->BITER  = 2;
+   // dma_buffer_transfer.TCD->CITER  = 2;
+   // dma_buffer_transfer.TCD->BITER  = 2;
+    dma_buffer_transfer.TCD->CITER  = 1;
+    dma_buffer_transfer.TCD->BITER  = 1;
     dma_buffer_transfer.TCD->SOFF = 2;
     dma_buffer_transfer.TCD->DOFF = 2;
     dma_buffer_transfer.TCD->ATTR_SRC = 1; 
     dma_buffer_transfer.TCD->ATTR_DST = 1; 
     dma_buffer_transfer.TCD->SLAST = -2*(NPIX+100);
-    dma_buffer_transfer.TCD->DLASTSGA = -4*(NPIX+100);
+   // dma_buffer_transfer.TCD->DLASTSGA = -4*(NPIX+100);
+    dma_buffer_transfer.TCD->DLASTSGA = -2*(NPIX+100);
 
     // The DMA triggers when the ADC stops 
-    dma_buffer_transfer.triggerAtCompletionOf(dma_adc_stop);
+    dma_buffer_transfer.triggerAtCompletionOf(dma_exposure_cnt_start);
 
     // Enables an interrupt at half to reset the source address...
     // There may be a more elegant way to do that
@@ -178,12 +259,12 @@ void setup_dma_buffer_transfer() {
     dma_enable_send.destination(send_data);
     dma_enable_send.transferSize(1);
     dma_enable_send.transferCount(1);
-    dma_enable_send.triggerAtCompletionOf(dma_buffer_transfer);
+//    dma_enable_send.triggerAtCompletionOf(dma_buffer_transfer);
 
 //    dma_enable_send.interruptAtCompletion();
 //    dma_enable_send.attachInterrupt(isr_buffer_transfer);
 
-    dma_enable_send.enable();
+//    dma_enable_send.enable();
 }
 
 void isr_buffer_transfer_src_reset() {
@@ -215,6 +296,8 @@ void isr_buffer_transfer_src_reset() {
  *  
  */
 void setup_dma() {
+    setup_dma_exposure_cnt(); 
+    setup_dma_exposure_cnt_start(); 
     setup_dma_portc();
     setup_dma_adc();
     setup_dma_buffer_transfer();
