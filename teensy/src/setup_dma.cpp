@@ -44,12 +44,13 @@ void isr_dma_exposure_cnt() {
     PIT_TCTRL0 &= ~PIT_TCTRL_TEN;
 
     // restart the clocks
-    ccd_clk();
-    adc_clk();
-    pwm_clk();
-    FTM1_OUTMASK = 0x00;
-    FTM0_OUTMASK = 0x00;
-    FTM2_OUTMASK = 0x00;
+//    ccd_clk();
+//    adc_clk();
+//    pwm_clk();
+//    FTM0_SC |= FTM_SC_CLKS(1); 
+//    FTM1_SC |= FTM_SC_CLKS(1); 
+//    FTM2_SC |= FTM_SC_CLKS(1); 
+    SIM_SCGC6 |= 1<<24 | 1<<25;
 }
 
 
@@ -73,13 +74,13 @@ void isr_dma_exposure_cnt_start() {
     dma_exposure_cnt_start.clearInterrupt();
 //    Serial.print("DMA Exposure CNT start\n");
 
+
+    SIM_SCGC6 &= ~(1<<24) & ~(1<<25); 
+
     // Stop the clocks
-    FTM1_OUTMASK = 0xFF;
-    FTM0_OUTMASK = 0xFF;
-    FTM2_OUTMASK = 0xFF;
- //   FTM0_SC = 0;
- //   FTM1_SC = 0;
- //   FTM2_SC = 0;
+//    FTM0_SC |= FTM_SC_CLKS(0); 
+//    FTM1_SC |= FTM_SC_CLKS(0); 
+//    FTM2_SC |= FTM_SC_CLKS(0); 
 }    
 
 uint8_t cnt_start = 0x01;
