@@ -6,13 +6,28 @@ DMAChannel dma_rog; // DMA to start the ADC
 DMAChannel dma_enable_rog; // DMA to enable the ROG channel
 extern DMAChannel dma_shut;
 
-volatile uint8_t adc_start = 0x00;
+uint8_t adc_start = 0x00;
 
 
 void isr_dma_rog() {
     dma_rog.clearInterrupt();
 
-    Serial.print("DMA ROG interrupt!\n");
+    volatile uint8_t *mux;
+
+    // Disable ROG
+    mux = (volatile uint8_t *)&(DMAMUX0_CHCFG0) + dma_rog.channel;
+    *mux &= ~DMAMUX_ENABLE;
+    dma_rog.disable();
+    CORE_PIN6_CONFIG &= ~PORT_PCR_IRQC(0);
+
+    // Enable SHUT
+    mux = (volatile uint8_t *)&(DMAMUX0_CHCFG0) + dma_shut.channel;
+    *mux |= DMAMUX_ENABLE;
+    dma_shut.enable();
+    CORE_PIN5_CONFIG |= PORT_PCR_IRQC(2);
+
+
+    Serial.printf("DMA ROG interrupt - FTM1_OUTMASK: %d!\n",FTM1_OUTMASK);
 
 }
 
@@ -67,11 +82,11 @@ void setup_dma_enable_rog() {
     dma_enable_rog.transferSize(1);
     dma_enable_rog.transferCount(1);
 
-    dma_enable_rog.triggerAtCompletionOf(dma_shut);
+//    dma_enable_rog.triggerAtCompletionOf(dma_shut);
 
-    dma_enable_rog.interruptAtCompletion();
-    dma_enable_rog.attachInterrupt(isr_dma_enable_rog);
+//    dma_enable_rog.interruptAtCompletion();
+//    dma_enable_rog.attachInterrupt(isr_dma_enable_rog);
 
-    dma_enable_rog.enable();
+//    dma_enable_rog.enable();
 }
 

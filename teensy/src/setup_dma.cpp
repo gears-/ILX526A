@@ -7,20 +7,20 @@
 void setup_dma() {
 
     // Exposure
-    setup_dma_exposure_cnt(); 
-    setup_dma_exposure_cnt_start(); 
+//    setup_dma_exposure_cnt(); 
+//    setup_dma_exposure_cnt_start(); 
 
     // Buffer manipulation
-    setup_dma_portc();
-    setup_dma_buffer_transfer();
+//    setup_dma_portc();
+//    setup_dma_buffer_transfer();
 
     // ROG
     setup_dma_rog();
-    setup_dma_enable_rog();
+    setup_dma_enable_shut();
 
     // SHUT
     setup_dma_shut();
-    setup_dma_enable_shut();
+    setup_dma_enable_rog();
 
 
     // Print setup information

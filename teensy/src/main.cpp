@@ -15,6 +15,7 @@ extern "C" int main(void) {
     Serial.print("Test\n");
     // Setup
     setup_clk();
+    delay(100);
     setup_dma();
 //    setup_isr();
 

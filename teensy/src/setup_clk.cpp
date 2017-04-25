@@ -95,8 +95,8 @@ void pwm_clk() {
     // CPWMS = 0 
     // MSnB:MSnA = xx
     // ELSnB:ELSnA = 10
-    // FTM0_CH7 works as the complement of channel 6, which has low-true pulses
     FTM0_COMBINE = FTM_COMBINE_COMBINE2 | FTM_COMBINE_COMBINE3; // Combine channels 4 and 5, and 6 and 7
+    // FTM0_CH7 works as the complement of channel 6, which has low-true pulses
     FTM0_COMBINE |= FTM_COMBINE_COMP3;
     FTM0_C4SC |= FTM_CSC_ELSB;
     FTM0_C6SC |= FTM_CSC_ELSA;
