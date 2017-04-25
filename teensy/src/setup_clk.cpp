@@ -5,8 +5,8 @@ void ccd_clk() {
     // Halt timers
     FTM1_SC = 0;
 
-    // Count at which switch occurs
-    FTM1_C0V = 30;
+    // Total count number at which switch occurs
+    FTM1_C0V = 24;
 
     // See table p783
     // This config yields edge aligned PWM with high-true pulses
@@ -15,8 +15,7 @@ void ccd_clk() {
     // CPWMS = 0
     // MSNB, MSNA = 10 -> edge aligned PWM
     // ELSB, ELSA = 10 -> high-true pulses
-    FTM1_C0SC = FTM_CSC_MSB | FTM_CSC_ELSA;    
-    FTM1_C0SC |= FTM_CSC_DMA | FTM_CSC_CHIE;
+    FTM1_C0SC = FTM_CSC_MSB | FTM_CSC_ELSB;    
 
     // Set initial count
     FTM1_CNTIN = 0;
@@ -31,7 +30,7 @@ void ccd_clk() {
     FTM1_CNT = 0;
 
     // Timer period
-    FTM1_MOD = 59;
+    FTM1_MOD = 47;
     
     // Pin configuration - no slew rate
     CORE_PIN3_CONFIG = PORT_PCR_MUX(3) | PORT_PCR_DSE;
@@ -40,11 +39,10 @@ void ccd_clk() {
 
 void adc_clk() {
     // Halt timers
-    FTM2_SC = 0;
+    FTM1_SC = 0;
 
     // Count at which switch occurs
-    //FTM2_C0V = 5;
-    FTM2_C0V = 30;
+    FTM1_C1V = 24;
 
     // See table p783
     // This config yields edge aligned PWM with high-true pulses
@@ -52,46 +50,42 @@ void adc_clk() {
     // COMBINE = 0
     // CPWMS = 0
     // MSNB, MSNA = 10 -> edge aligned PWM
-    // ELSB, ELSA = 10 -> high-true pulses
-    FTM2_C0SC = FTM_CSC_MSB | FTM_CSC_ELSB;    
-
-    // Enable DMA requests from FTM2
-    FTM2_C0SC |= FTM_CSC_DMA | FTM_CSC_CHIE;
+    // ELSB, ELSA = 01 -> low-true pulses
+    // Note that one can also do that with the COMP flag
+    FTM1_C1SC = FTM_CSC_MSB | FTM_CSC_ELSA;    
 
     // Set initial counter
-    FTM2_CNTIN = 0;
+    FTM1_CNTIN = 0;
 
     // Enable global time base slave
-    FTM2_CONF |= FTM_CONF_GTBEEN & ~FTM_CONF_GTBEOUT;
+    FTM1_CONF |= FTM_CONF_GTBEEN & ~FTM_CONF_GTBEOUT;
 
     // Start clocks
-    FTM2_SC = FTM_SC_CLKS(1) | FTM_SC_PS(0);
+    FTM1_SC = FTM_SC_CLKS(1) | FTM_SC_PS(0);
 
     // Reset CNT register
-    FTM2_CNT = 0;
+    FTM1_CNT = 0;
 
     // Timer period
-    //FTM2_MOD = 9;
-    FTM2_MOD = 59;
+    FTM1_MOD = 47;
     
     // Pin configuration - no slew rate
-    CORE_PIN32_CONFIG = PORT_PCR_MUX(3) | PORT_PCR_DSE;
+    CORE_PIN17_CONFIG = PORT_PCR_MUX(3) | PORT_PCR_DSE;
 
-    // We mask the ADC clock until it is triggered
-    FTM2_OUTMASK = 0xFF;
+    // We mask the ADC clock (channel 1) until it is triggered
+    FTM1_OUTMASK = ADC_MASK; 
 }
-
 
 void pwm_clk() {
     // Halt timers
     FTM0_SC = 0;
 
     // Count that corresponds to when switch occurs
-    FTM0_C2V = 2;
-    FTM0_C3V = 152;
+    FTM0_C4V = ROG_UP;
+    FTM0_C5V = ROG_DURATION;
 
-    FTM0_C4V = 46013;
-    FTM0_C5V = 46013+60;
+    FTM0_C6V = SHUT_UP;
+    FTM0_C7V = SHUT_DURATION;
 
     // ROG, SHUT
     // See table p783
@@ -101,19 +95,16 @@ void pwm_clk() {
     // CPWMS = 0 
     // MSnB:MSnA = xx
     // ELSnB:ELSnA = 10
-    FTM0_COMBINE = FTM_COMBINE_COMBINE1 | FTM_COMBINE_COMBINE2; // Combine channels 2 and 3, and 4 and 5
-    FTM0_C2SC |= FTM_CSC_ELSB;
+    // FTM0_CH7 works as the complement of channel 6, which has low-true pulses
+    FTM0_COMBINE = FTM_COMBINE_COMBINE2 | FTM_COMBINE_COMBINE3; // Combine channels 4 and 5, and 6 and 7
+    FTM0_COMBINE |= FTM_COMBINE_COMP3;
     FTM0_C4SC |= FTM_CSC_ELSB;
-
-    // Enable DMA requests from FTM
-    FTM0_C2SC |= FTM_CSC_DMA | FTM_CSC_CHIE;
-    //FTM0_C4SC |= FTM_CSC_DMA | FTM_CSC_CHIE;
-    FTM0_C4SC |= FTM_CSC_CHIE;
+    FTM0_C6SC |= FTM_CSC_ELSA;
 
     // Set initial counter
     FTM0_CNTIN = 0;
 
-    // Enable global time base slave
+    // Enable global time base master 
     FTM0_CONF |= FTM_CONF_GTBEEN;
 
     // Start clocks
@@ -122,12 +113,12 @@ void pwm_clk() {
     // Reset CNT register
     FTM0_CNT = 0;
 
-    // Timer period
-    FTM0_MOD = 47249;
+    // Timer period -- does not really matter, we reset the clocks separately
+    FTM0_MOD = 59999;
     
     // Pin configuration - no slew rate
     CORE_PIN6_CONFIG |= PORT_PCR_MUX(4) | PORT_PCR_DSE;
-    CORE_PIN24_CONFIG |= PORT_PCR_MUX(3) | PORT_PCR_DSE;
+    CORE_PIN5_CONFIG |= PORT_PCR_MUX(4) | PORT_PCR_DSE;
 
     // Initiate Global Time Base 
     FTM0_CONF |= FTM_CONF_GTBEOUT;

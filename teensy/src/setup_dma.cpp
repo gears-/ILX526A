@@ -1,311 +1,34 @@
-#include "setup_clk.h"
 #include "setup_dma.h"
-
-// List of pins mapped to the ADC output
-uint8_t const portc_pins[NBIT] = {15,22,23,9,10,13,11,12,28,27,29,30};
-
-// ADC Mask
-volatile uint8_t adc_stop = 0xFF;
-volatile uint8_t adc_start = 0x00;
-
-// DMA Channels
-DMAChannel dma_exposure_cnt;
-DMAChannel dma_exposure_cnt_start; // DMA for the exposure time
-DMAChannel dma_portc; // DMA for reading PORTC
-DMAChannel dma_adc_start; // DMA to start the ADC
-DMAChannel dma_adc_stop; // DMA to stop the ADC
-DMAChannel dma_buffer_transfer;
-DMAChannel dma_enable_send;
-
-volatile uint8_t send_data = 0x00;
-volatile uint16_t pix_data[NPIX+100] = {0};
-volatile uint16_t pix_buffer[NPIX+100] = {0};
-volatile uint16_t pix_sum[2*(NPIX+100)] = {0};
-
-// This on just transfers dummy data when PIT0 triggers it
-void isr_dma_exposure_cnt() {
-
-    dma_exposure_cnt.clearInterrupt();
-//If using the PIT to trigger a DMA channel where the major loop count is set to one, then in
-//order to get the desired periodic triggering, the DMA must do the following in the interrupt
-//service routine for the DMA_DONE interrupt:
-//1. Set the DMA_TCDn_CSR[DREQ] bit and configure DMAMUX_CHCFGn[ENBL] = 0
-//2. Then again DMAMUX_CHCFGn[ENBL] = 1, DMASREQ=channel in your DMA DONE
-//interrupt service routine so that "always enabled" source could negate its request then DMA
-//request could be negated.
-//This will allow the desired periodic triggering to function as expected.
-    Serial.print("DMA Exposure CNT\n");
-    //dma_exposure_cnt.disableOnCompletion();
-    DMAMUX0_CHCFG0 &= ~DMAMUX_ENABLE;
-
-    DMAMUX0_CHCFG0 |= DMAMUX_ENABLE;
-
-    // Disable the PIT timer
-    PIT_TCTRL0 &= ~PIT_TCTRL_TEN;
-
-    // restart the clocks
-//    ccd_clk();
-//    adc_clk();
-//    pwm_clk();
-//    FTM0_SC |= FTM_SC_CLKS(1); 
-//    FTM1_SC |= FTM_SC_CLKS(1); 
-//    FTM2_SC |= FTM_SC_CLKS(1); 
-    SIM_SCGC6 |= 1<<24 | 1<<25;
-}
-
-
-uint8_t dummy = 0x00;
-void setup_dma_exposure_cnt() {
-    dma_exposure_cnt.source(dummy);
-    dma_exposure_cnt.destination(dummy);
-
-    dma_exposure_cnt.transferSize(1);
-    dma_exposure_cnt.transferCount(1);
-
-    DMAMUX0_CHCFG0 |= DMAMUX_ENABLE | DMAMUX_TRIG | DMAMUX_SOURCE_ALWAYS0;
-
-    dma_exposure_cnt.interruptAtCompletion();
-    dma_exposure_cnt.attachInterrupt(isr_dma_exposure_cnt);
-    dma_exposure_cnt.enable();
-
-}
-
-void isr_dma_exposure_cnt_start() {
-    dma_exposure_cnt_start.clearInterrupt();
-//    Serial.print("DMA Exposure CNT start\n");
-
-
-    SIM_SCGC6 &= ~(1<<24) & ~(1<<25); 
-
-    // Stop the clocks
-//    FTM0_SC |= FTM_SC_CLKS(0); 
-//    FTM1_SC |= FTM_SC_CLKS(0); 
-//    FTM2_SC |= FTM_SC_CLKS(0); 
-}    
-
-uint8_t cnt_start = 0x01;
-void setup_dma_exposure_cnt_start() {
-    dma_exposure_cnt_start.source(cnt_start);
-    dma_exposure_cnt_start.destination(PIT_TCTRL0);
-    dma_exposure_cnt_start.transferSize(1);
-    dma_exposure_cnt_start.transferCount(1);
-
-    dma_exposure_cnt_start.triggerAtCompletionOf(dma_adc_stop);
-
-    dma_exposure_cnt_start.interruptAtCompletion();
-    dma_exposure_cnt_start.attachInterrupt(isr_dma_exposure_cnt_start);
-    dma_exposure_cnt_start.enable();
-}
-
-
-
-/* Function: setup_dma_portc
- * Description: sets the DMA request for transferring data from PORTC to the hold buffer 
- * Poll the register GPIOC_PDIR and transfer its content into the pixel of interest
- * Half of GPIOC_PDIR register is transferred (16 bits) since we are only about the first 12 bits
- */
-void setup_dma_portc() {
-    // Define all of our inputs
-    for(int idx = 0; idx < NBIT; ++idx) {
-        pinMode(portc_pins[idx],OUTPUT);
-    }    
-
-    // Enable DMA requests for FTM2, on the rising edge of port 32
-    CORE_PIN32_CONFIG |= PORT_PCR_IRQC(2);
-
-    // Use a single DMA channel triggered on the ADC to grab data from PORTC
-    // Source
-    dma_portc.source(GPIOC_PDIR);
-
-
-    // Size
-    dma_portc.transferSize(2); // 2 bytes = 16 bits
-    dma_portc.transferCount(1); // Only one transfer 
-
-    // Destination
-    dma_portc.destinationBuffer(pix_buffer,2*(NPIX+100));
-
-    // We increment destination by 2 bytes after every major loop count so that we can write next pixel in our buffer
-    // The destination is reset in the ISR raised by SHUT falling down
-//    dma_portc.TCD->DLASTSGA = 2;
-    
-    // Trigger on falling edge of FTM2
-    // Since PORTB only has the ADC clock running, we can trigger on all of port B (how convenient is that?)
-    // Having a DMA on the falling edge allows for data to be valid
-    dma_portc.triggerAtHardwareEvent(DMAMUX_SOURCE_PORTB);
-//    dma_portc.enable();
-
-}
-
-//void reset_dma_portc() {
-//    dma_portc.disable();
-//    dma_portc.source(GPIOC_PDIR);
- //   dma_portc.destination(pix_buffer[0]);
-//    dma_portc.enable();
-//}    
-
-
-/* 
- *  Function: dma_adc_setup
- *  Description: Start and stop the ADC clock with the DMA
- *  The source of the start and stop is a mask byte residing in memory
- *  and transferred to FTM2_OUTMASK
- *  Start of the ADC corresponds to ROG going low
- *  Stop of the ADC corresponds to SHUT going high 
- *  
- */
-void setup_dma_adc() {  
-    // Enable DMA requests on :
-    // - rising edge of pin 24 (ROG)
-    // - falling edge of pin 6 (SHUT)
-    CORE_PIN24_CONFIG |= PORT_PCR_IRQC(1);  
-    CORE_PIN6_CONFIG |= PORT_PCR_IRQC(2);
-
-    dma_adc_start.source(adc_start);
-    dma_adc_stop.source(adc_stop);
-
-    dma_adc_start.destination(FTM2_OUTMASK);
-    dma_adc_stop.destination(FTM2_OUTMASK);
-
-    dma_adc_start.transferSize(1);
-    dma_adc_stop.transferSize(1);
-
-    dma_adc_start.transferCount(1);
-    dma_adc_stop.transferCount(1);
-
-    dma_adc_start.triggerAtHardwareEvent(DMAMUX_SOURCE_PORTA);
-    dma_adc_stop.triggerAtHardwareEvent(DMAMUX_SOURCE_PORTD);
-
-    dma_adc_start.enable();
-    dma_adc_stop.enable();
-}
-
-/* 
- * Function
- * Description: turn off all of the clocks
- *
- */
-/*
-void setup_dma_clock_stop() {
-    dma_ftm0_stop.source(adc_start);
-    dma_ftm1_stop.source(adc_start);
-
-    dma_ftm0_stop.destination(FTM0_SC);
-    dma_ftm1_stop.destination(FTM1_SC);
-
-    dma_ftm0_stop.transferSize(1);
-    dma_ftm1_stop.transferSize(1);
-
-    dma_ftm0_stop.transferCount(1);
-    dma_ftm1_stop.transferCount(1);
-
-    dma_ftm0_stop.triggerAtCompletionOf(dma_adc_stop);
-    dma_ftm1_stop.triggerAtCompletionOf(dma_adc_stop);
-
-    dma_ftm0_stop.enable();
-    dma_ftm1_stop.enable();
-}
-*/
-
-
-
-/*
- * Function: setup_dma_buffer_transfer
- * Description: enables a DMA transfer that triggers when the ADC is shut down. 
- * The transfer moves the raw data gathered into pix_buffer into a staging buffer.
- * The staging buffer is twice the size of pix_buffer so that it can average two complete samples.
- * Once the transfer is done, an ISR is raised so that averaging can be triggered, and data can be sent away. 
- */
-uint8_t trig_send_data = 0x01;
-void setup_dma_buffer_transfer() {
-
-    for(int i = 0;i<NPIX+100;++i) {
-        pix_buffer[i] = NPIX+100-i;
-        pix_data[i] = 0;
-    }
-
-    for(int i = 0;i<2*(NPIX+100);++i)
-        pix_sum[i] = 0;
-
-    dma_buffer_transfer.source(pix_buffer[0]);
-    dma_buffer_transfer.destination(pix_sum[0]);
-    //dma_buffer_transfer.destination(pix_data[0]);
-
-    // Set up 2 transfers of uint16_t array of size NPIX+100
-    // Corresponds to 2*2*(NPIX+100) bytes
-    dma_buffer_transfer.TCD->NBYTES = 2*(NPIX+100);
-   // dma_buffer_transfer.TCD->CITER  = 2;
-   // dma_buffer_transfer.TCD->BITER  = 2;
-    dma_buffer_transfer.TCD->CITER  = 1;
-    dma_buffer_transfer.TCD->BITER  = 1;
-    dma_buffer_transfer.TCD->SOFF = 2;
-    dma_buffer_transfer.TCD->DOFF = 2;
-    dma_buffer_transfer.TCD->ATTR_SRC = 1; 
-    dma_buffer_transfer.TCD->ATTR_DST = 1; 
-    dma_buffer_transfer.TCD->SLAST = -2*(NPIX+100);
-   // dma_buffer_transfer.TCD->DLASTSGA = -4*(NPIX+100);
-    dma_buffer_transfer.TCD->DLASTSGA = -2*(NPIX+100);
-
-    // The DMA triggers when the ADC stops 
-    dma_buffer_transfer.triggerAtCompletionOf(dma_exposure_cnt_start);
-
-    // Enables an interrupt at half to reset the source address...
-    // There may be a more elegant way to do that
-    dma_buffer_transfer.interruptAtHalf();
-    dma_buffer_transfer.attachInterrupt(isr_buffer_transfer_src_reset);
-
-    dma_buffer_transfer.enable();
-
-    dma_enable_send.source(trig_send_data);
-    dma_enable_send.destination(send_data);
-    dma_enable_send.transferSize(1);
-    dma_enable_send.transferCount(1);
-//    dma_enable_send.triggerAtCompletionOf(dma_buffer_transfer);
-
-//    dma_enable_send.interruptAtCompletion();
-//    dma_enable_send.attachInterrupt(isr_buffer_transfer);
-
-//    dma_enable_send.enable();
-}
-
-void isr_buffer_transfer_src_reset() {
-    dma_buffer_transfer.clearInterrupt();
-    dma_buffer_transfer.TCD->SADDR = &pix_buffer[0];
-}
-
-//void isr_buffer_transfer() {
-//    dma_enable_send.clearInterrupt();
-//    Serial.print("ISR from DMA\n");
-//}
-
-
-/* 
- * Function: setup_isr_buffer_transfer
- * Description: clears the interrupt raised by the DMA transfer, then sets a flag that tells the main program to send data away 
- */
-//void isr_buffer_transfer() {
-//    dma_buffer_transfer.clearInterrupt();
-//    send_data = true;
-//}
-
-
-
-
 /* 
  *  Function: setup_dma
  *  Description: shorthand to initialize everything
  *  
  */
 void setup_dma() {
+
+    // Exposure
     setup_dma_exposure_cnt(); 
     setup_dma_exposure_cnt_start(); 
+
+    // Buffer manipulation
     setup_dma_portc();
-    setup_dma_adc();
     setup_dma_buffer_transfer();
 
+    // ROG
+    setup_dma_rog();
+    setup_dma_enable_rog();
+
+    // SHUT
+    setup_dma_shut();
+    setup_dma_enable_shut();
+
+
+    // Print setup information
     Serial.print("DMA Channels\n");
+    Serial.printf("Exposure control: PIT0 countdown %d\t PIT0 starter %d\n",dma_exposure_cnt.channel,dma_exposure_cnt_start.channel);
+    Serial.printf("ROG: ADC start %d\t Enabling ROG %d\n",dma_rog.channel,dma_enable_rog.channel);
+    Serial.printf("SHUT: ADC start %d\t Enabling SHUT %d\n",dma_shut.channel,dma_enable_shut.channel);
     Serial.printf("PORTC: %d\n",dma_portc.channel);
-    Serial.printf("ADC (start, stop): %d, %d\n",dma_adc_start.channel,dma_adc_stop.channel);
     Serial.printf("BUFFER TRANSFER: %d\n",dma_buffer_transfer.channel);
 }
 

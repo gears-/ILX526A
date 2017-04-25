@@ -1,27 +1,39 @@
 #ifndef _SETUP_DMA_H_
 #define _SETUP_DMA_H_
 
-#include <Arduino.h>
+#include "Arduino.h"
 #include "DMAChannel.h"
 
-#define NPIX 3000 // Number of CCD pixels
-#define NBIT 12 // Number of ADC bits
+#include "setup_dma_exposure.h"
+#include "setup_dma_buffer.h"
+#include "setup_dma_rog.h"
+#include "setup_dma_shut.h"
+
+#include "setup_clk.h"
 
 // Function declaration
 void setup_dma();
-void setup_dma_adc();
-void setup_dma_portc(); 
-
-void setup_dma_buffer_transfer();
-void isr_buffer_transfer();
-void isr_buffer_transfer_src_reset(); 
-
-
 
 // External variables shared across multiple files
 // Pixel buffer
-extern volatile uint16_t pix_data[NPIX+100];
-extern volatile uint16_t pix_buffer[NPIX+100];
+extern volatile uint16_t pix_data[BUF_SIZE];
+extern volatile uint16_t pix_buffer[BUF_SIZE];
+
+
+// DMA Channels
+extern DMAChannel dma_exposure_cnt;
+extern DMAChannel dma_exposure_cnt_start; // DMA for the exposure time
+
+extern DMAChannel dma_rog;
+extern DMAChannel dma_enable_rog; // DMA to enable the ROG channel
+extern DMAChannel dma_shut;
+extern DMAChannel dma_enable_shut; // DMA to enable the SHUT channel
+
+extern DMAChannel dma_portc; // DMA for reading PORTC
+extern DMAChannel dma_buffer_transfer;
+extern DMAChannel dma_enable_send;
+
+
 
 
 // Unique string generated with uuidgen for start of transmission
