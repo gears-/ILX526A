@@ -130,9 +130,9 @@ TC_FILES := $(wildcard $(COREPATH)/*.c)
 TCPP_FILES := $(wildcard $(COREPATH)/*.cpp)
 
 # Local sources
-C_FILES := $(wildcard src/*.c)
-CPP_FILES := $(wildcard src/*.cpp)
-INO_FILES := $(wildcard src/*.ino)
+C_FILES := $(sort $(wildcard src/*.c))
+CPP_FILES := $(sort $(wildcard src/*.cpp))
+INO_FILES := $(sort $(wildcard src/*.ino))
 
 ## Includes
 # Local include folder
