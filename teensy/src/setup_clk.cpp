@@ -114,7 +114,8 @@ void pwm_clk() {
     FTM0_CNT = 0;
 
     // Timer period -- does not really matter, we reset the clocks separately
-    FTM0_MOD = 59999;
+   // FTM0_MOD = 47999;
+    FTM0_MOD = 38399;
     
     // Pin configuration - no slew rate
     CORE_PIN6_CONFIG |= PORT_PCR_MUX(4) | PORT_PCR_DSE;
@@ -123,6 +124,22 @@ void pwm_clk() {
     // Initiate Global Time Base 
     FTM0_CONF |= FTM_CONF_GTBEOUT;
 }
+
+void pit0_isr(void) {
+    // Clear it
+    PIT_TFLG0 = 1;
+//    Serial.printf("PIT0 reached LDVAL0 - SIMSCGC6: %d!\n",SIM_SCGC6);
+
+    // Start the clocks again
+    SIM_SCGC6 |= SIM_SCGC6_FTM0 | SIM_SCGC6_FTM1; 
+    FTM1_CNT = 0;
+    FTM0_CNT = 0;
+
+    // When PIT0 raises an interrupt...
+    // Disable PIT0
+    PIT_TCTRL0 &= ~PIT_START_MASK;
+}
+
 
 void pit0_setup() {
     // PIT clock gate enabled
@@ -134,8 +151,12 @@ void pit0_setup() {
     // write 1 to clean timer interrupt flag
     PIT_TFLG0 = PIT_TFLG_TIF;
 
-    // set timer 0 for 15 cycles
-    PIT_LDVAL0 = 480000; 
+    // Enable interrupt
+    NVIC_ENABLE_IRQ(IRQ_PIT_CH0);
+
+    // Timer originally defaults to 5 ms
+    // TODO: Change the value to actually 5 ms
+    PIT_LDVAL0 = 50121; 
 }
 
 void setup_clk() {

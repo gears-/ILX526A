@@ -8,11 +8,11 @@
 DMAChannel dma_exposure_cnt;
 DMAChannel dma_exposure_cnt_start; // DMA for the exposure time
 extern DMAChannel dma_enable_rog;
+extern DMAChannel dma_shut;
 
 /*
  * Function: setup_dma_exposure_cnt
- * Description: simple counter based on successive DMA requests from PIT0 timer
- * The DMA is triggered until the PIT0 timer is exhausted
+ * Descriptino: 
  *
  */
 uint8_t dummy = 0x00;
@@ -24,6 +24,7 @@ void setup_dma_exposure_cnt() {
     dma_exposure_cnt.transferCount(1);
 
     DMAMUX0_CHCFG0 |= DMAMUX_ENABLE | DMAMUX_TRIG | DMAMUX_SOURCE_ALWAYS0;
+//    DMAMUX0_CHCFG0 |= DMAMUX_ENABLE | DMAMUX_TRIG | DMAMUX_SOURCE_PORTD;
 
     dma_exposure_cnt.interruptAtCompletion();
     dma_exposure_cnt.attachInterrupt(isr_dma_exposure_cnt);
@@ -33,7 +34,7 @@ void setup_dma_exposure_cnt() {
 
 void isr_dma_exposure_cnt_start() {
     dma_exposure_cnt_start.clearInterrupt();
-    Serial.print("Exposure PIT TCTRL0 interrupt!\n");
+//    Serial.print("Exposure PIT TCTRL0 interrupt!\n");
 }
 
 /*
@@ -42,16 +43,16 @@ void isr_dma_exposure_cnt_start() {
  * It is triggered when the dma_shut finishes stopping the ADC clock
  *
  */
-uint8_t cnt_start = PIT_START_MASK;
+uint8_t cnt_start = PIT_TCTRL_TEN | PIT_TCTRL_TIE;
 void setup_dma_exposure_cnt_start() {
     dma_exposure_cnt_start.source(cnt_start);
     dma_exposure_cnt_start.destination(PIT_TCTRL0);
     dma_exposure_cnt_start.transferSize(1);
     dma_exposure_cnt_start.transferCount(1);
 
-    dma_exposure_cnt_start.triggerAtCompletionOf(dma_enable_rog);
-    dma_exposure_cnt_start.interruptAtCompletion();
-    dma_exposure_cnt_start.attachInterrupt(isr_dma_exposure_cnt);
+    dma_exposure_cnt_start.triggerAtCompletionOf(dma_shut);
+//    dma_exposure_cnt_start.interruptAtCompletion();
+//    dma_exposure_cnt_start.attachInterrupt(isr_dma_exposure_cnt_start);
 
     dma_exposure_cnt_start.enable();
 }
@@ -78,7 +79,9 @@ void setup_dma_exposure_cnt_start() {
  */
 void isr_dma_exposure_cnt() {
     dma_exposure_cnt.clearInterrupt();
-    Serial.print("DMA Exposure CNT\n");
+    // Clear it
+    PIT_TFLG0 = 1;
+//    Serial.print("DMA Exposure CNT\n");
 
     DMAMUX0_CHCFG0 &= ~DMAMUX_ENABLE;
     DMAMUX0_CHCFG0 |= DMAMUX_ENABLE;
@@ -88,6 +91,8 @@ void isr_dma_exposure_cnt() {
 
     // Restart the clocks in one fell swoop
     SIM_SCGC6 |= SIM_SCGC6_FTM0 | SIM_SCGC6_FTM1; 
+    FTM1_CNT = 0;
+    FTM0_CNT = 0;
 }
 
 

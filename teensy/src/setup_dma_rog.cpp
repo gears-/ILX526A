@@ -6,9 +6,14 @@ DMAChannel dma_rog; // DMA to start the ADC
 DMAChannel dma_enable_rog; // DMA to enable the ROG channel
 extern DMAChannel dma_shut;
 
-uint8_t adc_start = 0x00;
 
 
+/*
+ * Function: isr_dma_rog
+ * Description: ISR raised by starting the ADC
+ * The ISR completely disables the ROG DMA, and arms the SHUT DMA
+ *
+ */
 void isr_dma_rog() {
     dma_rog.clearInterrupt();
 
@@ -27,7 +32,7 @@ void isr_dma_rog() {
     CORE_PIN5_CONFIG |= PORT_PCR_IRQC(2);
 
 
-    Serial.printf("DMA ROG interrupt - FTM1_OUTMASK: %d!\n",FTM1_OUTMASK);
+//    Serial.printf("DMA ROG interrupt - FTM1_OUTMASK: %d!\n",FTM1_OUTMASK);
 
 }
 
@@ -40,6 +45,7 @@ void isr_dma_rog() {
  *  Stop of the ADC corresponds to SHUT going high 
  *  
  */
+volatile uint8_t adc_start = 0x00;
 void setup_dma_rog() {  
     // Enable DMA requests on :
     // - falling edge of pin 6 (ROG)
@@ -62,11 +68,16 @@ void setup_dma_rog() {
 
 }
 
+
+
+
+/*
 void isr_dma_enable_rog() {
     dma_enable_rog.clearInterrupt();
 
     Serial.print("DMA enable ROG interrupt!\n");
 }
+*/
 
 /*
  * Function: setup_dma_enable_rog
@@ -74,7 +85,6 @@ void isr_dma_enable_rog() {
  * DMA_SERQ sets the "Enable Request Register" (DMA_ERQ)
  * This approach is more reliable than an ISR
  *
- */ 
 void setup_dma_enable_rog() {
     dma_enable_rog.source(dma_rog.channel);
     dma_enable_rog.destination(DMA_SERQ);
@@ -89,4 +99,4 @@ void setup_dma_enable_rog() {
 
 //    dma_enable_rog.enable();
 }
-
+*/ 
