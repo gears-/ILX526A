@@ -92,7 +92,7 @@ Data is marked for transfer with a DMA. The transfer is done through the USB "se
 
 ### FAQ
 1. Why not use DMA with PIT timers in lieu of FTM? 
-> It seems that the maximum switching frequency of a port based on DMA requests triggered by PIT timers is 3 MHz. The ADC could not be driven at max speed with these frequencies and would rely on FTM. There is _no_ guarantee (?) of synchronization between FTM and PIT. The output of a 1 MHz clock from FTM shifts in time with respect to the 3 MHz PIT. Jitter also shows up on a scope. 
+> It seems that the maximum switching frequency of a port based on DMA requests triggered by PIT timers is 3 MHz. There is _no_ guarantee (?) of synchronization between FTM and PIT, or between multiple PIT channels. The output of a 1 MHz clock from FTM shifts in time with respect to the 3 MHz PIT. Jitter also shows up on a scope. 
 
 
 
