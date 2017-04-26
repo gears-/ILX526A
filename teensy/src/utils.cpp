@@ -50,14 +50,16 @@ uint32_t read_exposure(char *cmd_buffer) {
     switch(unit) {
         case 's':
             fac = FACTOR::SECONDS;
-            Serial.print("Factor is seconds\n");
             break;
         case 'm':
             fac = FACTOR::MILLISECONDS;
-            Serial.print("Factor is milliseconds\n");
+            // If the exposure value the host asked is too low, then set it to a default value of 5 ms
+            if( val < 5. )
+                val = 5.;
+
             break;
     }
 
     // Get the corresponding timer value
-    return (F_BUS / (uint32_t) fac) * val;
+    return ((F_BUS / (uint32_t) fac) * val - 1);
 }

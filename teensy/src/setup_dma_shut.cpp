@@ -23,10 +23,16 @@ void isr_dma_shut() {
 //    PIT_TCTRL0 |= PIT_TCTRL_TEN;
 
     // Disable ALL clocks
-    SIM_SCGC6 &= ~SIM_SCGC6_FTM0 & ~SIM_SCGC6_FTM1;
+   // SIM_SCGC6 &= ~SIM_SCGC6_FTM0 & ~SIM_SCGC6_FTM1;
 
     // Set CCD clock to 0 (ISR makes it so that it stays up occasionnally)
     
+
+    // Disable the ADC clock for next cycle
+    CORE_PIN17_CONFIG &= ~PORT_PCR_MUX(3); 
+    CORE_PIN17_CONFIG |= PORT_PCR_MUX(0);
+    GPIOB_PDOR &= ~(1<<1);
+
 
     // Disable SHUT
     volatile uint8_t *mux;

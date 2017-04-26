@@ -15,16 +15,14 @@ uint8_t incoming_byte = 0;
 uint8_t cmd_recvd = 0;
 char cmd_buffer[16] = {0};
 uint8_t cmd_idx = 0; 
-uint32_t exposure = 0; 
+uint32_t exposure = 240000-1; 
 
 extern "C" int main(void) {
     Serial.begin(9600);
-    Serial.print("Test\n");
     // Setup
     setup_clk();
     delay(100);
     setup_dma();
-//    setup_isr();
 
     Serial.print("End of setup\n");
 
@@ -34,11 +32,10 @@ extern "C" int main(void) {
             // Parse the command
             CMD_PARSE_RET ret = cmd_parse(cmd_buffer);
             
-
             switch(ret){
                 case CMD_PARSE_RET::EXPOSURE_MATCH:
                     exposure = read_exposure(cmd_buffer);
-                    Serial.printf("LDVAL required is: %d\n",exposure);
+                    // Serial.printf("LDVAL required is: %d\n",exposure);
                     break;
 
                 case CMD_PARSE_RET::NO_MATCH:

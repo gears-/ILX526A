@@ -5,6 +5,7 @@
 #include "DMAChannel.h"
 
 #include "setup_dma_exposure.h"
+#include "setup_dma_ldval.h"
 #include "setup_dma_buffer.h"
 #include "setup_dma_rog.h"
 #include "setup_dma_shut.h"

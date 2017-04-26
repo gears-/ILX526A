@@ -130,8 +130,11 @@ void pit0_isr(void) {
     // Clear it
     PIT_TFLG0 = 1;
 
+    CORE_PIN17_CONFIG |= PORT_PCR_MUX(3);
+
     // Start the clocks again
     SIM_SCGC6 |= SIM_SCGC6_FTM0 | SIM_SCGC6_FTM1; 
+    FTM1_OUTMASK = 0x02;
     FTM1_CNT = 0;
     FTM0_CNT = 0;
 

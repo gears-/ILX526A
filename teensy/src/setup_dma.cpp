@@ -9,6 +9,8 @@ void setup_dma() {
     // Exposure
     setup_dma_exposure_cnt_start(); 
 
+    setup_dma_ldval();
+
     // Buffer manipulation
 //    setup_dma_portc();
 //    setup_dma_buffer_transfer();
@@ -19,6 +21,7 @@ void setup_dma() {
 
     // SHUT
     setup_dma_shut();
+//    setup_dma_disable_clocks();
 //    setup_dma_enable_rog();
 
 
