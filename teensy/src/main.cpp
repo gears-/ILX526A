@@ -10,6 +10,11 @@ uint32_t tic,toc;
 extern volatile uint8_t send_data;
 extern volatile uint16_t pix_sum[2*(NPIX+100)];
 
+uint8_t incoming_byte = 0;
+uint8_t cmd_recvd = 0;
+uint8_t cmd_buffer[16] = {0};
+uint8_t cmd_idx = 0; 
+
 extern "C" int main(void) {
     Serial.begin(9600);
     Serial.print("Test\n");
@@ -23,7 +28,49 @@ extern "C" int main(void) {
 
     // Loop function
     while(1) {
-//
+        if(cmd_recvd) {
+            switch(cmd_buffer[0]) {
+                // We are changing the exposure
+                case 'e':
+                    //read_exposure();
+                    //set_exposure();
+                    break;
+
+
+                // We are stopping _all_ operations
+                case 'x':
+                    break;
+
+                // Single shot measurement
+                case 's':
+                    break;
+
+                // Continuous measurement
+                case 'c':
+                    break;
+            }
+            // Ready for next command
+            cmd_idx = 0;
+            cmd_recvd = 0;
+            memset(cmd_buffer,0,sizeof(cmd_buffer));
+        } 
+
+        // Did the host send us something?
+        if ( Serial.available()) {
+            incoming_byte = Serial.read();
+
+            // If our incoming byte is linefeed, this is the end of the command
+            if( incoming_byte == 0x0a ) {
+                cmd_buffer[cmd_idx++] = '\0';
+                cmd_recvd = 1;
+            } 
+            // Otherwise it's a command instruction
+            else {
+               cmd_buffer[cmd_idx++] = incoming_byte;
+              cmd_recvd = 0; 
+            }
+        }
+
 //        if( send_data == 0x01 ) {
 //
 //            digitalWrite(15,HIGH);
