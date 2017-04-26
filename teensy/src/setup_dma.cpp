@@ -7,9 +7,6 @@
 void setup_dma() {
 
     // Exposure
-    setup_dma_exposure_cnt(); 
-    setup_dma_reset_ftm1();
-    setup_dma_reset_ftm0();
     setup_dma_exposure_cnt_start(); 
 
     // Buffer manipulation
