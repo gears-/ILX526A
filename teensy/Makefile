@@ -192,10 +192,9 @@ $(BUILDDIR)/%.o: %.ino
 
 # Get core object files into a single .a library
 $(CORE_LIBS): 
+	@echo -e "[AR]\t$@"
 	$(AR) rcs $@ $(CORE_OBJS)
 
-# Create the HEX, ELF files
-	#$(CC) $(LDFLAGS) -o "$@" $(OBJS) $(LIBS) $(CORE_LIBS) 
 $(TARGET).elf: $(OBJS) $(CORE_LIBS)
 	@echo -e "[LD]\t$@"
 	$(CC) $(LDFLAGS) -o "$@" $(USER_OBJS) $(LIBS) $(CORE_LIBS) 

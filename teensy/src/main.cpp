@@ -1,6 +1,7 @@
 #include "setup_clk.h"
 #include "setup_dma.h"
 #include "setup_isr.h"
+#include "utils.h"
 
 #define __DEBUG__
 
@@ -12,8 +13,9 @@ extern volatile uint16_t pix_sum[2*(NPIX+100)];
 
 uint8_t incoming_byte = 0;
 uint8_t cmd_recvd = 0;
-uint8_t cmd_buffer[16] = {0};
+char cmd_buffer[16] = {0};
 uint8_t cmd_idx = 0; 
+uint32_t exposure = 0; 
 
 extern "C" int main(void) {
     Serial.begin(9600);
@@ -29,26 +31,21 @@ extern "C" int main(void) {
     // Loop function
     while(1) {
         if(cmd_recvd) {
-            switch(cmd_buffer[0]) {
-                // We are changing the exposure
-                case 'e':
-                    //read_exposure();
-                    //set_exposure();
+            // Parse the command
+            CMD_PARSE_RET ret = cmd_parse(cmd_buffer);
+            
+
+            switch(ret){
+                case CMD_PARSE_RET::EXPOSURE_MATCH:
+                    exposure = read_exposure(cmd_buffer);
+                    Serial.printf("LDVAL required is: %d\n",exposure);
                     break;
 
-
-                // We are stopping _all_ operations
-                case 'x':
-                    break;
-
-                // Single shot measurement
-                case 's':
-                    break;
-
-                // Continuous measurement
-                case 'c':
+                case CMD_PARSE_RET::NO_MATCH:
+                    Serial.printf("I do not recognize this command: %s\n", cmd_buffer);
                     break;
             }
+
             // Ready for next command
             cmd_idx = 0;
             cmd_recvd = 0;
