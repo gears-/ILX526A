@@ -125,19 +125,18 @@ void pwm_clk() {
     FTM0_CONF |= FTM_CONF_GTBEOUT;
 }
 
+// When PIT0 raises an interrupt...
 void pit0_isr(void) {
     // Clear it
     PIT_TFLG0 = 1;
-//    Serial.printf("PIT0 reached LDVAL0 - SIMSCGC6: %d!\n",SIM_SCGC6);
 
     // Start the clocks again
-    SIM_SCGC6 |= SIM_SCGC6_FTM0 | SIM_SCGC6_FTM1; 
-    FTM1_CNT = 0;
-    FTM0_CNT = 0;
+//    SIM_SCGC6 |= SIM_SCGC6_FTM0 | SIM_SCGC6_FTM1; 
+//    FTM1_CNT = 0;
+//    FTM0_CNT = 0;
 
-    // When PIT0 raises an interrupt...
     // Disable PIT0
-    PIT_TCTRL0 &= ~PIT_START_MASK;
+    PIT_TCTRL0 &= ~PIT_TCTRL_TEN;
 }
 
 
@@ -156,7 +155,7 @@ void pit0_setup() {
 
     // Timer originally defaults to 5 ms
     // TODO: Change the value to actually 5 ms
-    PIT_LDVAL0 = 50121; 
+    PIT_LDVAL0 = 240000-1;
 }
 
 void setup_clk() {

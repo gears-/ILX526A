@@ -26,7 +26,6 @@ void isr_dma_shut() {
     SIM_SCGC6 &= ~SIM_SCGC6_FTM0 & ~SIM_SCGC6_FTM1;
 
     // Set CCD clock to 0 (ISR makes it so that it stays up occasionnally)
-//    digitalWrite(3,LOW);
     
 
     // Disable SHUT
@@ -52,21 +51,21 @@ void isr_dma_shut() {
  * - Data gets transferred through USB by setting a flag which is picked up
  *   by the main program loop 
  */
-uint32_t disable_clocks = SIM_SCGC6 & ~SIM_SCGC6_FTM0 & ~SIM_SCGC6_FTM1 | SIM_SCGC6_DMAMUX | SIM_SCGC6_PIT ; 
+uint32_t disable_clocks = (SIM_SCGC6 & ~SIM_SCGC6_FTM0 & ~SIM_SCGC6_FTM1) | SIM_SCGC6_DMAMUX | SIM_SCGC6_PIT | SIM_SCGC6_ADC0 | SIM_SCGC6_RTC | SIM_SCGC6_FTFL ; 
 uint8_t adc_stp = 0x02;
 void setup_dma_shut() {
     // Enable DMA requests on
     // - falling edge of pin 5 (SHUT)
 //    CORE_PIN5_CONFIG |= PORT_PCR_IRQC(2);
 
-//    dma_shut.source(disable_clocks);
-//    dma_shut.destination(SIM_SCGC6);
+    dma_shut.source(disable_clocks);
+    dma_shut.destination(SIM_SCGC6);
 
-    dma_shut.source(adc_stp);
-    dma_shut.destination(FTM1_OUTMASK);
+//    dma_shut.source(adc_stp);
+//    dma_shut.destination(FTM1_OUTMASK);
 
     // Transfer the whole register -- 32 bits = 4 bytes
-    dma_shut.transferSize(1);
+    dma_shut.transferSize(4);
     dma_shut.transferCount(1);
 
     dma_shut.triggerAtHardwareEvent(DMAMUX_SOURCE_PORTD);

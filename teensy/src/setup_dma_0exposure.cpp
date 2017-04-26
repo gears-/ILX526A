@@ -6,9 +6,48 @@
 
 // DMA Channels
 DMAChannel dma_exposure_cnt;
+DMAChannel dma_reset_ftm1;
+DMAChannel dma_reset_ftm0;
 DMAChannel dma_exposure_cnt_start; // DMA for the exposure time
 extern DMAChannel dma_enable_rog;
 extern DMAChannel dma_shut;
+
+
+void isr_reset_ftm1() {
+    dma_reset_ftm1.clearInterrupt();
+}
+
+
+uint8_t reset_ftm = 0x00;
+void setup_dma_reset_ftm1() {
+    dma_reset_ftm1.source(reset_ftm);
+    dma_reset_ftm1.destination(FTM1_CNT);
+
+    dma_reset_ftm1.transferSize(1);
+    dma_reset_ftm1.transferCount(1);
+
+    dma_reset_ftm1.triggerAtCompletionOf(dma_exposure_cnt);
+
+    dma_reset_ftm1.interruptAtCompletion();
+    dma_reset_ftm1.attachInterrupt(isr_reset_ftm1);
+
+    dma_reset_ftm1.enable();
+
+}
+
+
+void setup_dma_reset_ftm0() {
+    dma_reset_ftm0.source(reset_ftm);
+    dma_reset_ftm0.destination(FTM0_CNT);
+
+    dma_reset_ftm0.transferSize(1);
+    dma_reset_ftm0.transferCount(1);
+
+    dma_reset_ftm0.triggerAtCompletionOf(dma_reset_ftm1);
+
+    dma_reset_ftm0.enable();
+
+}
 
 /*
  * Function: setup_dma_exposure_cnt
@@ -16,11 +55,12 @@ extern DMAChannel dma_shut;
  *
  */
 uint8_t dummy = 0x00;
+uint32_t enable_clocks = SIM_SCGC6 | SIM_SCGC6_FTM0  |SIM_SCGC6_FTM1 | SIM_SCGC6_DMAMUX | SIM_SCGC6_PIT | SIM_SCGC6_ADC0 | SIM_SCGC6_RTC | SIM_SCGC6_FTFL; 
 void setup_dma_exposure_cnt() {
-    dma_exposure_cnt.source(dummy);
-    dma_exposure_cnt.destination(dummy);
+    dma_exposure_cnt.source(enable_clocks);
+    dma_exposure_cnt.destination(SIM_SCGC6);
 
-    dma_exposure_cnt.transferSize(1);
+    dma_exposure_cnt.transferSize(4);
     dma_exposure_cnt.transferCount(1);
 
     DMAMUX0_CHCFG0 |= DMAMUX_ENABLE | DMAMUX_TRIG | DMAMUX_SOURCE_ALWAYS0;
@@ -87,28 +127,12 @@ void isr_dma_exposure_cnt() {
     DMAMUX0_CHCFG0 |= DMAMUX_ENABLE;
 
     // Disable the PIT timer
-    PIT_TCTRL0 &= ~PIT_TCTRL_TEN;
+//    PIT_TCTRL0 &= ~PIT_TCTRL_TEN;
 
     // Restart the clocks in one fell swoop
-    SIM_SCGC6 |= SIM_SCGC6_FTM0 | SIM_SCGC6_FTM1; 
-    FTM1_CNT = 0;
-    FTM0_CNT = 0;
+//    SIM_SCGC6 |= SIM_SCGC6_FTM0 | SIM_SCGC6_FTM1; 
+//    FTM1_CNT = 0;
+//    FTM0_CNT = 0;
 }
 
-
-/* 
- * Function: isr_dma_exposure_cnt_start
- * Description: interrupt service routine that disables ALL of the clocks at once on FTM0 and FTM1
- * It also re-arms the read-out gate (ROG) DMA for the next cycle
- *
- */
-//void isr_dma_exposure_cnt_start() {
-//    dma_exposure_cnt_start.clearInterrupt();
-//
-//    // Stop the clocks in a _single_ instruction
-//    SIM_SCGC6 &= ~SIM_SCGC6_FTM0 & ~SIM_SCGC6_FTM1; 
-//
-//    // Re-arm ROG
-//    dma_rog.enable();
-//}    
 
