@@ -18,17 +18,7 @@ extern DMAChannel dma_rog;
 void isr_dma_shut() {
     dma_shut.clearInterrupt();
 
-//   Serial.printf("DMA SHUT Interrupt - FTM1_OUTMASK: %d\n",FTM1_OUTMASK);
-    // Start the exposure counter
-//    PIT_TCTRL0 |= PIT_TCTRL_TEN;
-
-    // Disable ALL clocks
-   // SIM_SCGC6 &= ~SIM_SCGC6_FTM0 & ~SIM_SCGC6_FTM1;
-
-    // Set CCD clock to 0 (ISR makes it so that it stays up occasionnally)
-    
-
-    // Disable the ADC clock for next cycle
+    // Set the ADC clock low for next cycle
     CORE_PIN17_CONFIG &= ~PORT_PCR_MUX(3); 
     CORE_PIN17_CONFIG |= PORT_PCR_MUX(0);
     GPIOB_PDOR &= ~(1<<1);
