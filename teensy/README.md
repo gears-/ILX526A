@@ -14,9 +14,6 @@ Pixels are shifted out one by one on each CCD clock cycle, until the shutter dra
 The code uses all available flexible timers to generate clocks and recurring signals, and makes sure to synchronize them. 
 At full speed, both the ADC and CCD are driven at 1 MHz. ROG and SHUT are as fast as can be based on the timing requirements. 
 
-### Periodic Interrupt Timer (PIT)
-PIT0 is used to control the exposure time. It is a 32 bit timer. Assuming the bus clock is at its maximum (48 MHz), this corresponds to about 90s maximum of exposure time. 
-
 
 #### Channels
 The table below shows the total number of channels for each flexible timer
@@ -33,7 +30,28 @@ FTM0 uses 4 channels for the ROG and SHUT PWM signals. The channels are used in 
 #### Synchronization
 A nifty feature from the K20 ARM processor is _global timer base_ (GTB). GTB enables the FTM signals to be synchronized. Note that only FTM0 can be used as the master (see Section 3.8.2.9 p116)!!!  
 
-#### Output Pins
+
+### Periodic Interrupt Timer (PIT)
+PIT0 is used to control the exposure time. It is a 32 bit timer. Assuming the bus clock is at its maximum (48 MHz), this corresponds to about 90s maximum of exposure time. 
+
+
+### Direct Memory Accesses (DMA)
+The DMA engine is used to trigger events very fast. On the K20 ARM processor, multiple DMA requests may be linked, which allows for complex behavior. The following DMA requests are executed:
+1. Each time the ADC clock goes HIGH, the whole PORTC bus is transferred into the data buffer
+2. When ROG goes LOW, the ADC is enabled
+3. On a linked channel, the most current counter value is loaded into PIT_LDVAL0 
+4. When SHUT goes LOW, the FTM clocks are disabled by manipulating the SIM_SCGC6 register 
+5. On a linked channel, PIT0 is started
+6. On a linked channel copy the data from the data buffer to the buffer staged for data transfer 
+
+### ISR
+Both the ROG and SHUT DMA raise ISRs. Each channel activates the other one. For example, when the ROG ISR is called, ROG disables itself, and enables SHUT. The SHUT DMA also disables the ADC during the exposure time.  
+PIT0 triggers an ISR, which re-starts the FTM clock for the next cycle.
+
+### Data transfer
+Data is marked for transfer with a DMA. The transfer is done through the USB "serial" interface of the Teensy. A header (originally randomly generated) is sent to the host, then the data stream begins. The total time it takes to transfer the data is also communicated to the host.  
+
+### Output Pins
 The flexible timers provide a pin output on the Teensy. See Teensy's documentation to map out the K20 ports to the Teensy pins. The ports are configured with the PORTx_PCRn register on the K20 (see p.227). The field of interest is "MUX" (bits 10-8), which lists "alternative configurations". The Table p207 shows the "alternative configurations". For example, PORTB0 corresponds to GPIO pin 16 on the Teensy if configured with MUX set to 1. The same pin may be used to drive FTM1_CH0 if MUX is set to 3. 
 As of 04/26/2017, the following pins are used to generate all of the clock signals
 
@@ -57,7 +75,7 @@ As of 04/26/2017, the following pins are used to generate all of the clock signa
 | PC11 | 30 | ADC B11 | Bit 11 from ADC |
 
 
-#### Clocks
+### Clocks
 FTM operates on the _bus clock_, not the system clock. Section 5 of the documentation outlines the clock definitions and requirements
 1. Core and system clocks must be 72 MHz or less
 2. Bus clock must be _less than 50 MHz, and an integer divide of the core clock_
@@ -71,23 +89,6 @@ The table below outlines the different bus clock values one can obtain based on 
 | 48 | 48 |
 
 The maximum signal one can generate from FTM is 1/2 of the bus clock. This corresponds to 24 MHz.
-
-
-### Direct Memory Accesses (DMA)
-The DMA engine is used to trigger events very fast. On the K20 ARM processor, multiple DMA requests may be linked, which allows for complex behavior. The following DMA requests are executed:
-1. Each time the ADC clock goes HIGH, the whole PORTC bus is transferred into the data buffer
-2. When ROG goes LOW, the ADC is enabled
-3. On a linked channel, the most current counter value is loaded into PIT_LDVAL0 
-4. When SHUT goes LOW, the FTM clocks are disabled by manipulating the SIM_SCGC6 register 
-5. On a linked channel, PIT0 is started
-6. On a linked channel copy the data from the data buffer to the buffer staged for data transfer 
-
-### ISR
-Both the ROG and SHUT DMA raise ISRs. Each channel activates the other one. For example, when the ROG ISR is called, ROG disables itself, and enables SHUT. The SHUT DMA also disables the ADC during the exposure time.  
-PIT0 triggers an ISR, which re-starts the FTM clock for the next cycle.
-
-### Data transfer
-Data is marked for transfer with a DMA. The transfer is done through the USB "serial" interface of the Teensy. A header (originally randomly generated) is sent to the host, then the data stream begins. The total time it takes to transfer the data is also communicated to the host.  
 
 
 ### FAQ

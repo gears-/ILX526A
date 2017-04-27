@@ -9,5 +9,4 @@ The Arduino code makes use of direct port manipulation to generate the ROG and S
 -----------------
 The project was inspired by multiple sources: 
 - Dave Allmon's [fast 16-bit spectrometer](http://davidallmon.com/pages/ad7667-spectrograph).
--
--
+- erossel's [spectrometer](https://tcd1304.wordpress.com/)
