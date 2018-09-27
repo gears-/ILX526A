@@ -30,7 +30,6 @@ void isr_dma_rog() {
     dma_shut.enable();
     CORE_PIN5_CONFIG |= PORT_PCR_IRQC(2);
 
-
 //    Serial.printf("DMA ROG interrupt - FTM1_OUTMASK: %d!\n",FTM1_OUTMASK);
 
 }
@@ -75,35 +74,3 @@ void setup_dma_rog() {
 
 }
 
-
-
-
-/*
-void isr_dma_enable_rog() {
-    dma_enable_rog.clearInterrupt();
-
-    Serial.print("DMA enable ROG interrupt!\n");
-}
-*/
-
-/*
- * Function: setup_dma_enable_rog
- * Description: arm the ROG DMA by transferring the channel number into DMA_SERQ
- * DMA_SERQ sets the "Enable Request Register" (DMA_ERQ)
- * This approach is more reliable than an ISR
- *
-void setup_dma_enable_rog() {
-    dma_enable_rog.source(dma_rog.channel);
-    dma_enable_rog.destination(DMA_SERQ);
-
-    dma_enable_rog.transferSize(1);
-    dma_enable_rog.transferCount(1);
-
-//    dma_enable_rog.triggerAtCompletionOf(dma_shut);
-
-//    dma_enable_rog.interruptAtCompletion();
-//    dma_enable_rog.attachInterrupt(isr_dma_enable_rog);
-
-//    dma_enable_rog.enable();
-}
-*/ 
