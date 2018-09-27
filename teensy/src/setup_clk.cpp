@@ -1,6 +1,12 @@
 #include "Arduino.h"
 #include "setup_clk.h"
 
+/*
+ * Function: ccd_clk
+ * Description: setup the CCD clock
+ * Output is a 1 MHz clock with a 50% duty cycle
+ *
+ */ 
 void ccd_clk() {
     // Halt timers
     FTM1_SC = 0;
@@ -37,6 +43,13 @@ void ccd_clk() {
 
 }
 
+/*
+ * Function: adc_clk
+ * Description: setup the ADC clock
+ * Output is a 1 MHz clock with a 50% duty cycle half a period out of phase with 
+ * the CCD. This is so that the data on the CCD is ready to be sampled by the ADC. 
+ *
+ */ 
 void adc_clk() {
     // Halt timers
     FTM1_SC = 0;
@@ -76,6 +89,11 @@ void adc_clk() {
     FTM1_OUTMASK = ADC_MASK; 
 }
 
+/*
+ * Function: pwm_clk
+ * Description: sets up the ROG and the SHUT triggers with a PWM cycle
+ *
+ */
 void pwm_clk() {
     // Halt timers
     FTM0_SC = 0;
@@ -125,7 +143,14 @@ void pwm_clk() {
     FTM0_CONF |= FTM_CONF_GTBEOUT;
 }
 
-// When PIT0 raises an interrupt...
+/* 
+ * Function: pit0_isr
+ * Description: what to do when PIT0 raises an interrupt (IRQ)
+ * First clear the interrupt, then starts all of the clocks (CCD, ROG, SHUT, ADC).
+ * It then disables PIT0. 
+ * PIT0 is re-enabled using a DMA after the end of the CCD cycle
+ *
+ */
 void pit0_isr(void) {
     // Clear it
     PIT_TFLG0 = 1;
@@ -142,7 +167,13 @@ void pit0_isr(void) {
     PIT_TCTRL0 &= ~PIT_TCTRL_TEN;
 }
 
-
+/*
+ * Function: pit0_setup
+ * Description: enables the 32 bit timer PIT0 to control the exposure
+ * It is set up to raise an IRQ when it finishes its count. 
+ * The exposure time is controlled with the register PIT_LDVAL0
+ *
+ */
 void pit0_setup() {
     // PIT clock gate enabled
     SIM_SCGC6 |= SIM_SCGC6_PIT;
