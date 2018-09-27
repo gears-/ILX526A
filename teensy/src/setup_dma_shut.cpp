@@ -23,7 +23,6 @@ void isr_dma_shut() {
     CORE_PIN17_CONFIG |= PORT_PCR_MUX(0);
     GPIOB_PDOR &= ~(1<<1);
 
-
     // Disable SHUT
     volatile uint8_t *mux;
     mux = (volatile uint8_t *)&(DMAMUX0_CHCFG0) + dma_shut.channel;
@@ -36,6 +35,9 @@ void isr_dma_shut() {
     *mux |= DMAMUX_ENABLE;
     dma_rog.enable();
     CORE_PIN6_CONFIG |= PORT_PCR_IRQC(2);
+
+    // Re-initializes the source of the DMA from PORTC
+    // TODO
 }
 
 /*
