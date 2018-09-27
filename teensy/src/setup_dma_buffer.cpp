@@ -50,7 +50,7 @@ void setup_dma_portc() {
     // Since PORTB only has the ADC clock running, we can trigger on all of port B (how convenient is that?)
     // Having a DMA on the falling edge allows for data to be valid
     dma_portc.triggerAtHardwareEvent(DMAMUX_SOURCE_PORTB);
-//    dma_portc.enable();
+    dma_portc.enable();
 
 }
 

@@ -13,7 +13,7 @@ void setup_dma() {
 
     // Buffer manipulation
 //    setup_dma_portc();
-//    setup_dma_buffer_transfer();
+    setup_dma_buffer_transfer();
 
     // ROG
     setup_dma_rog();
