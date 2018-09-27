@@ -28,11 +28,11 @@ void setup_dma_portc() {
         pinMode(portc_pins[idx],INPUT);
     }    
 
-    // Enable DMA requests for FTM1, on the rising edge of port 17 
+    // Enable DMA requests for FTM1, on the rising edge of port 17 (that's the ADC) 
     CORE_PIN17_CONFIG |= PORT_PCR_IRQC(1);
 
     // Use a single DMA channel triggered on the ADC to grab data from PORTC
-    // Source
+    // Source: GPIOC_PDIR -> all of Port C  (12 bits on the Teensy, though the register is 32 bits)
     dma_portc.source(GPIOC_PDIR);
 
     // Size
@@ -40,8 +40,10 @@ void setup_dma_portc() {
     dma_portc.transferCount(1); // Only one transfer 
 
     // Destination
+    // destinationBuffer from DMAchannels.h sets up a lot of the DMA transfer registers so we don't have to
     dma_portc.destinationBuffer(pix_buffer,2*(NPIX+100));
 
+    // It still needs to set the offset after every major loop, though
     // We increment destination by 2 bytes after every major loop count so that we can write next pixel in our buffer
     // The destination is reset in the ISR raised by SHUT falling down
     dma_portc.TCD->DLASTSGA = 2;
@@ -51,7 +53,6 @@ void setup_dma_portc() {
     // Having a DMA on the falling edge allows for data to be valid
     dma_portc.triggerAtHardwareEvent(DMAMUX_SOURCE_PORTB);
     dma_portc.enable();
-
 }
 
 /*
