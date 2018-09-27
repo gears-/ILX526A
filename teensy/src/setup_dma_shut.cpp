@@ -42,7 +42,7 @@ void isr_dma_shut() {
  * Function: setup_dma_shut
  * Description: trigger for a cascade of events when the shutter drain closes
  * The following events occur:
- * - ADC gets disabled
+ * - ADC gets disabled by setting the second bit of FTM1_OUTMASK to 1
  * - Exposure starts with a PIT timer  
  * - Data gets transferred through USB by setting a flag which is picked up
  *   by the main program loop 

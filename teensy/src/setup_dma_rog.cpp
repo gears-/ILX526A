@@ -7,7 +7,6 @@ DMAChannel dma_enable_rog; // DMA to enable the ROG channel
 extern DMAChannel dma_shut;
 
 
-
 /*
  * Function: isr_dma_rog
  * Description: ISR raised by starting the ADC
@@ -36,6 +35,15 @@ void isr_dma_rog() {
 
 }
 
+
+// Mask to enable the ADC
+// Only the 8 lowest bits of FTMx_OUTMASK are used.
+// They correspond to each channel that use the timer.
+// Setting the corresponding bit to 0 unmasks a clock.
+// In this case, we unmask ALL FTM1 clocks (CCD and ADC)
+// See section 36.3.13 in processor doc
+volatile uint8_t adc_start = 0x00;
+
 /* 
  *  Function: setup_dma_rog
  *  Description: Start and stop the ADC clock with the DMA
@@ -45,7 +53,6 @@ void isr_dma_rog() {
  *  Stop of the ADC corresponds to SHUT going high 
  *  
  */
-volatile uint8_t adc_start = 0x00;
 void setup_dma_rog() {  
     // Enable DMA requests on :
     // - falling edge of pin 6 (ROG)
