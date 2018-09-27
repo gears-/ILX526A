@@ -57,9 +57,6 @@ void setup_dma_shut() {
     dma_shut.source(disable_clocks);
     dma_shut.destination(SIM_SCGC6);
 
-//    dma_shut.source(adc_stp);
-//    dma_shut.destination(FTM1_OUTMASK);
-
     // Transfer the whole register -- 32 bits = 4 bytes
     dma_shut.transferSize(4);
     dma_shut.transferCount(1);
@@ -70,51 +67,6 @@ void setup_dma_shut() {
     dma_shut.attachInterrupt(isr_dma_shut);
 
     dma_shut.disableOnCompletion();
-//    dma_shut.enable();
+    // This DMA is enabled by the ROG DMA
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-void isr_dma_enable_shut() {
-    dma_enable_shut.clearInterrupt();
-    Serial.print("DMA enable SHUT Interrupt!\n");
-}
-*/
-
-/*
- * Function: setup_dma_enable_shut
- * Description: arm the SHUT DMA by transferring the channel number into DMA_SERQ
- * DMA_SERQ sets the "Enable Request Register" (DMA_ERQ)
- * This approach is more reliable than an ISR
- *
-void setup_dma_enable_shut() {
-    dma_enable_shut.source(dma_shut.channel);
-    dma_enable_shut.destination(DMA_SERQ);
-
-    dma_enable_shut.transferSize(1);
-    dma_enable_shut.transferCount(1);
-
-//    dma_enable_shut.triggerAtCompletionOf(dma_rog);
-
-    dma_enable_shut.interruptAtCompletion();
-    dma_enable_shut.attachInterrupt(isr_dma_enable_shut);
-
-//    dma_enable_shut.enable();
-}
- */ 
 
