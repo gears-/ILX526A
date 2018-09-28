@@ -1,3 +1,4 @@
+#include "Arduino.h"
 #include "setup_clk.h"
 #include "setup_dma.h"
 #include "setup_isr.h"
@@ -17,10 +18,16 @@ char cmd_buffer[16] = {0};
 uint8_t cmd_idx = 0; 
 uint32_t exposure = 240000-1; 
 
+char ret = '\n';
+uint32_t start_frame = (uint32_t)SOT; 
+
 // Main loop
 extern "C" int main(void) {
+    // Set the pin 26 as an output for data indication
+    pinMode(26,OUTPUT);
+
     // Initialize serial port at 9600 bauds
-    Serial.begin(9600);
+//    Serial.begin(9600);
     // Setup clock and DMA requests
     setup_clk();
     delay(100);
@@ -72,37 +79,45 @@ extern "C" int main(void) {
 
         // Should we send data?
         if( send_data == 0x01 ) {
-            Serial.printf("Send data!\n");
+            //Serial.printf("Send data!\n");
 
-            digitalWrite(15,HIGH);
+            digitalWrite(26,HIGH);
             tic = micros();
             
             for(int i = 0; i < NPIX+100;++i)
-                pix_data[i] = pix_sum[i] + pix_sum[i+NPIX+100];
+                pix_data[i] = i;
+                //pix_data[i] = pix_sum[i] + pix_sum[i+NPIX+100];
 
-            Serial.flush();
+            pix_data[0] += random(10);
+            //pix_data[NPIX+100] += random(1);
+            //Serial.flush();
 
             // Send the start of transmission string
-            Serial.write(SOT,36); 
-            Serial.write("\n");
+            //Serial.write(SOT,36); 
+            //Serial.write("\n");
 
             // Send the data 
             // Send 2*(NPIX+100) bytes one by one as opposed to (NPIX + 100) 2 bytes
-            Serial.write((const uint8_t*)pix_data, 2*(NPIX+100));
-            Serial.write("\n");
+            // Due to Serial.write not working with uint16_t type
+            Serial.write((const uint8_t*)start_frame,32);
+            Serial.write((const uint8_t*)pix_data,2*(NPIX+100));
+            //Serial.write((const uint8_t*)pix_data,2*(NPIX+100));
+            //Serial.write((const uint8_t*)pix_data,40); // Garbage
 
             // Tell USB not to wait for chunks to be of size 64 bytes 
-            Serial.send_now();  
+//            Serial.send_now();  
 
             // Calculate the elapsed time in sending data, then send that information as well 
+            /*
             toc = micros();
             toc -= tic;
             Serial.write((const uint8_t*)&toc,4);
             Serial.write("\n");
             Serial.send_now();
+            */
 
             send_data = 0x00;
-            digitalWrite(15,LOW);
+            digitalWrite(26,LOW);
         }
     }
 
