@@ -73,6 +73,7 @@ void setup_dma_portc() {
 uint8_t trig_send_data = 0x01;
 void setup_dma_buffer_transfer() {
 
+    //// TEST DATA
     for(int i = 0;i<BUF_SIZE;++i) {
         pix_buffer[i] = BUF_SIZE-i;
         pix_data[i] = 0;
