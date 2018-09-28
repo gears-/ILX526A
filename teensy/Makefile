@@ -27,10 +27,10 @@ BUILDDIR = $(abspath $(CURDIR)/build)
 #************************************************************************
 
 # Path location for Teensy Loader, teensy_post_compile and teensy_reboot
-TOOLSPATH = /usr/share/arduino/hardware/tools
+TOOLSPATH = /usr/share/arduino/1.8.7/hardware/tools
 
 # Path location for Teensy 3 core
-COREPATH = /usr/share/arduino/hardware/teensy
+COREPATH = /usr/share/arduino/1.8.7/hardware/teensy
 
 # Path location for Teensy libraries
 LIBRARYPATH = $(COREPATH)/cores/teensy3
