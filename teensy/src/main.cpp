@@ -6,8 +6,6 @@
 
 #define __DEBUG__
 
-uint32_t tic,toc;
-
 // Boolean signaling data needs sent 
 extern volatile uint8_t send_data;
 extern volatile uint16_t pix_sum[2*(NPIX+100)];
@@ -27,7 +25,7 @@ extern "C" int main(void) {
     pinMode(26,OUTPUT);
 
     // Initialize serial port at 9600 bauds
-//    Serial.begin(9600);
+    Serial.begin(9600);
     // Setup clock and DMA requests
     setup_clk();
     delay(100);
@@ -79,42 +77,18 @@ extern "C" int main(void) {
 
         // Should we send data?
         if( send_data == 0x01 ) {
-            //Serial.printf("Send data!\n");
-
             digitalWrite(26,HIGH);
-            tic = micros();
             
+
             for(int i = 0; i < NPIX+100;++i)
                 pix_data[i] = i;
                 //pix_data[i] = pix_sum[i] + pix_sum[i+NPIX+100];
 
-            pix_data[0] += random(10);
-            //pix_data[NPIX+100] += random(1);
-            //Serial.flush();
+            // Send the data cast a uint8_t since Serial.write does not work w/ uint16_t types 
+            Serial.write((const uint8_t*)start_frame,32); // Start of transmission: 32 bytes
+            Serial.write((const uint8_t*)pix_data,2*(NPIX+100)); // Actual data: 3200 bytes
+            Serial.write((const uint8_t*)pix_data,40); // Padding: only 36 bytes since we complete our 98 x 64 bytes packet with an additional write 
 
-            // Send the start of transmission string
-            //Serial.write(SOT,36); 
-            //Serial.write("\n");
-
-            // Send the data 
-            // Send 2*(NPIX+100) bytes one by one as opposed to (NPIX + 100) 2 bytes
-            // Due to Serial.write not working with uint16_t type
-            Serial.write((const uint8_t*)start_frame,32);
-            Serial.write((const uint8_t*)pix_data,2*(NPIX+100));
-            //Serial.write((const uint8_t*)pix_data,2*(NPIX+100));
-            //Serial.write((const uint8_t*)pix_data,40); // Garbage
-
-            // Tell USB not to wait for chunks to be of size 64 bytes 
-//            Serial.send_now();  
-
-            // Calculate the elapsed time in sending data, then send that information as well 
-            /*
-            toc = micros();
-            toc -= tic;
-            Serial.write((const uint8_t*)&toc,4);
-            Serial.write("\n");
-            Serial.send_now();
-            */
 
             send_data = 0x00;
             digitalWrite(26,LOW);
