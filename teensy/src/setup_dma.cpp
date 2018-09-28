@@ -5,25 +5,23 @@
  *  
  */
 void setup_dma() {
-
     // Exposure
     setup_dma_exposure_cnt_start(); 
 
+    // PIT0 length (LDVAL)
     setup_dma_ldval();
 
-    // Buffer manipulation
+    // Transfer data from PORTC
 //    setup_dma_portc();
+
+    // Buffer manipulation
     setup_dma_buffer_transfer();
 
     // ROG
     setup_dma_rog();
-//    setup_dma_enable_shut();
 
     // SHUT
     setup_dma_shut();
-//    setup_dma_disable_clocks();
-//    setup_dma_enable_rog();
-
 
     // Print setup information
     Serial.print("DMA Channels\n");
