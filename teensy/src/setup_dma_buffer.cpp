@@ -12,7 +12,7 @@ extern DMAChannel dma_exposure_cnt_start;
 uint8_t const portc_pins[NBIT] = {15,22,23,9,10,13,11,12,28,27,29,30};
 
 volatile uint8_t send_data = 0x00;
-volatile uint16_t pix_data[NPIX+100] = {0};
+volatile uint16_t pix_data[NPIX+100+100] = {0}; // Padding
 volatile uint16_t pix_buffer[NPIX+100] = {0};
 volatile uint16_t pix_sum[2*(NPIX+100)] = {0};
 
@@ -75,7 +75,8 @@ void setup_dma_buffer_transfer() {
 
     //// TEST DATA
     for(int i = 0;i<BUF_SIZE;++i) {
-        pix_buffer[i] = BUF_SIZE-i;
+        //pix_buffer[i] = BUF_SIZE-i;
+        pix_buffer[i] = 1;
         pix_data[i] = 0;
     }
 
@@ -109,6 +110,7 @@ void setup_dma_buffer_transfer() {
     dma_enable_send.destination(send_data);
     dma_enable_send.transferSize(1);
     dma_enable_send.transferCount(1);
+    dma_enable_send.triggerAtCompletionOf(dma_buffer_transfer);
     dma_enable_send.enable();
 
     // The setup below can be used if we have a buffer we fill twice before averaging
@@ -120,7 +122,6 @@ void setup_dma_buffer_transfer() {
 //    dma_buffer_transfer.interruptAtHalf();
 //    dma_buffer_transfer.attachInterrupt(isr_buffer_transfer_src_reset);
 
-//    dma_enable_send.triggerAtCompletionOf(dma_buffer_transfer);
 
 //    dma_enable_send.interruptAtCompletion();
 //    dma_enable_send.attachInterrupt(isr_buffer_transfer);
