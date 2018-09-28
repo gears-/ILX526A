@@ -81,6 +81,7 @@ void setup_dma_buffer_transfer() {
     for(int i = 0;i<2*BUF_SIZE;++i)
         pix_sum[i] = 0;
 
+    //// DMA request for the buffer
     dma_buffer_transfer.source(pix_buffer[0]);
     dma_buffer_transfer.destination(pix_sum[0]);
 
@@ -100,13 +101,14 @@ void setup_dma_buffer_transfer() {
     // The DMA triggers during the exposure time 
     dma_buffer_transfer.triggerAtCompletionOf(dma_exposure_cnt_start);
 
-
     dma_buffer_transfer.enable();
 
+    //// DMA request to trigger the buffer being sent
     dma_enable_send.source(trig_send_data);
     dma_enable_send.destination(send_data);
     dma_enable_send.transferSize(1);
     dma_enable_send.transferCount(1);
+    dma_enable_send.enable();
 
     // The setup below can be used if we have a buffer we fill twice before averaging
    // dma_buffer_transfer.TCD->CITER  = 2;
@@ -122,7 +124,6 @@ void setup_dma_buffer_transfer() {
 //    dma_enable_send.interruptAtCompletion();
 //    dma_enable_send.attachInterrupt(isr_buffer_transfer);
 
-//    dma_enable_send.enable();
 }
 
 
