@@ -17,9 +17,11 @@ char cmd_buffer[16] = {0};
 uint8_t cmd_idx = 0; 
 uint32_t exposure = 240000-1; 
 
+// Main loop
 extern "C" int main(void) {
+    // Initialize serial port at 9600 bauds
     Serial.begin(9600);
-    // Setup
+    // Setup clock and DMA requests
     setup_clk();
     delay(100);
     setup_dma();
@@ -28,8 +30,10 @@ extern "C" int main(void) {
 
     // Loop function
     while(1) {
+        // Structure to treat the commands received
         if(cmd_recvd) {
             // Parse the command
+            // Return an error if it is the wrong command
             CMD_PARSE_RET ret = cmd_parse(cmd_buffer);
             
             switch(ret){
@@ -43,7 +47,8 @@ extern "C" int main(void) {
                     break;
             }
 
-            // Ready for next command
+            // Ready for next command: reset cmd_idx, cmd_recvd, and the buffer that holds
+            // the command
             cmd_idx = 0;
             cmd_recvd = 0;
             memset(cmd_buffer,0,sizeof(cmd_buffer));
@@ -65,7 +70,9 @@ extern "C" int main(void) {
             }
         }
 
+        // Should we send data?
         if( send_data == 0x01 ) {
+            Serial.printf("Send data!\n");
 
             digitalWrite(15,HIGH);
             tic = micros();
@@ -80,6 +87,7 @@ extern "C" int main(void) {
             Serial.write("\n");
 
             // Send the data 
+            // Send 2*(NPIX+100) bytes one by one as opposed to (NPIX + 100) 2 bytes
             Serial.write((const uint8_t*)pix_data, 2*(NPIX+100));
             Serial.write("\n");
 
