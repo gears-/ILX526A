@@ -36,17 +36,23 @@ void setup_dma_portc() {
     dma_portc.source(GPIOC_PDIR);
 
     // Size
-    dma_portc.transferSize(2); // 2 bytes = 16 bits
-    dma_portc.transferCount(1); // Only one transfer 
+    //dma_portc.transferSize(2); // 2 bytes = 16 bits
+    //dma_portc.transferCount(1); // Only one transfer 
 
     // Destination
     // destinationBuffer from DMAchannels.h sets up a lot of the DMA transfer registers so we don't have to
+    // DADDR = &pix_buffer --- address of the first destination
+    // DOFF = 2 --- offset in bytes to find the next destination
+    // BITER, CITER = 2*(NPIX+100)/2 --- number of major loops to transfer i.e. number of times 2 bytes are transferred
+    // NBYTES = 2 --- 2 bytes transferred per major loop count
+    // ATTR_DST = 1 --- size of the destination location; here 2 bytes 
+    // DLAST_SGA = -2*(NPIX + 100) --- once we're done with all iterations, need to go back to the beginning of our vector
     dma_portc.destinationBuffer(pix_buffer,2*(NPIX+100));
 
     // It still needs to set the offset after every major loop, though
     // We increment destination by 2 bytes after every major loop count so that we can write next pixel in our buffer
     // The destination is reset in the ISR raised by SHUT falling down
-    dma_portc.TCD->DLASTSGA = 2;
+    //dma_portc.TCD->DLASTSGA = 2;
     
     // Trigger on falling edge of FTM1
     // Since PORTB only has the ADC clock running, we can trigger on all of port B (how convenient is that?)
