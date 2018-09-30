@@ -12,7 +12,7 @@ void setup_dma() {
     setup_dma_ldval();
 
     // Transfer data from PORTC
-//    setup_dma_portc();
+    setup_dma_portc();
 
     // Buffer manipulation
     setup_dma_buffer_transfer();
