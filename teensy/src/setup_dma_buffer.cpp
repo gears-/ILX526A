@@ -41,6 +41,8 @@ void setup_dma_portc() {
 
     // Destination
     // destinationCircular from DMAchannels.h sets up a lot of the DMA transfer registers so we don't have to
+    // A circular buffer should work since we do our NPIX + 100 ADC transfers THEN we send the data IMMEDIATELY to the host.
+    // There is no risk for data to be overwritten
     // DADDR = &pix_buffer --- address of the first destination
     // DOFF = 2 --- offset in bytes to find the next destination
     // BITER, CITER = 2*(NPIX+100)/2 --- number of major loops to transfer i.e. number of times 2 bytes are transferred
@@ -51,11 +53,6 @@ void setup_dma_portc() {
     // DLAST_SGA = 0 --- circular buffer: once done with each major iteration we use the modulo counter to find the next address 
     dma_portc.destinationCircular(pix_buffer,2*(NPIX+100));
 
-    // It still needs to set the offset after every major loop, though
-    // We increment destination by 2 bytes after every major loop count so that we can write next pixel in our buffer
-    // The destination is reset in the ISR raised by SHUT falling down
-    //dma_portc.TCD->DLASTSGA = 2;
-    
     // Trigger on falling edge of FTM1
     // Since PORTB only has the ADC clock running, we can trigger on all of port B (how convenient is that?)
     // Having a DMA on the falling edge allows for data to be valid
