@@ -12,7 +12,7 @@ extern DMAChannel dma_exposure_cnt_start;
 uint8_t const portc_pins[NBIT] = {15,22,23,9,10,13,11,12,28,27,29,30};
 
 volatile uint8_t send_data = 0x00;
-volatile uint16_t pix_data[NPIX+100+100] = {0}; // Padding
+volatile uint16_t pix_data[NPIX+100] = {0}; // Padding
 volatile uint16_t pix_buffer[NPIX+100] = {0};
 volatile uint16_t pix_sum[2*(NPIX+100)] = {0};
 
@@ -36,18 +36,20 @@ void setup_dma_portc() {
     dma_portc.source(GPIOC_PDIR);
 
     // Size
-    //dma_portc.transferSize(2); // 2 bytes = 16 bits
-    //dma_portc.transferCount(1); // Only one transfer 
+    dma_portc.transferSize(2); // 2 bytes = 16 bits
+    dma_portc.transferCount(1); // Only one transfer 
 
     // Destination
-    // destinationBuffer from DMAchannels.h sets up a lot of the DMA transfer registers so we don't have to
+    // destinationCircular from DMAchannels.h sets up a lot of the DMA transfer registers so we don't have to
     // DADDR = &pix_buffer --- address of the first destination
     // DOFF = 2 --- offset in bytes to find the next destination
     // BITER, CITER = 2*(NPIX+100)/2 --- number of major loops to transfer i.e. number of times 2 bytes are transferred
     // NBYTES = 2 --- 2 bytes transferred per major loop count
-    // ATTR_DST = 1 --- size of the destination location; here 2 bytes 
-    // DLAST_SGA = -2*(NPIX + 100) --- once we're done with all iterations, need to go back to the beginning of our vector
-    dma_portc.destinationBuffer(pix_buffer,2*(NPIX+100));
+    // ATTR_DST = (31-clz(NPIX+100)) << 3 | 1 --- the OR operation sets the first three bits of the register: size of the destination location; here 2 bytes 
+    // The clz operation is a trick to remove the leading zeros of the modulo value (here NPIX+100). 31 - clz(NPIX+100) sets the bit value of the modulo.
+    // It is shifted to the left by three bits so that bits 3 through 7 in the register are set to NPIX+100 and enable the modulo operation.
+    // DLAST_SGA = 0 --- circular buffer: once done with each major iteration we use the modulo counter to find the next address 
+    dma_portc.destinationCircular(pix_buffer,2*(NPIX+100));
 
     // It still needs to set the offset after every major loop, though
     // We increment destination by 2 bytes after every major loop count so that we can write next pixel in our buffer
@@ -76,7 +78,7 @@ void setup_dma_buffer_transfer() {
     //// TEST DATA
     for(int i = 0;i<BUF_SIZE;++i) {
         //pix_buffer[i] = BUF_SIZE-i;
-        pix_buffer[i] = 1;
+        pix_buffer[i] = i;
         pix_data[i] = 0;
     }
 
