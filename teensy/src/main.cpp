@@ -24,7 +24,7 @@ extern "C" int main(void) {
     // Set the pin 26 as an output for data indication
     pinMode(26,OUTPUT);
 
-    // Initialize serial port at 9600 bauds
+    // Initialize serial port at 9600 bauds (actual number does not matter; USB always work full speed)
     Serial.begin(9600);
     // Setup clock and DMA requests
     setup_clk();
@@ -81,13 +81,14 @@ extern "C" int main(void) {
             
 
             for(int i = 0; i < NPIX+100;++i)
-                pix_data[i] = i;
-                //pix_data[i] = pix_sum[i] + pix_sum[i+NPIX+100];
+//                pix_data[i] = i;
+                pix_data[i] = pix_sum[i] + pix_sum[i+NPIX+100];
 
             // Send the data cast a uint8_t since Serial.write does not work w/ uint16_t types 
-            Serial.write((const uint8_t*)start_frame,32); // Start of transmission: 32 bytes
-            Serial.write((const uint8_t*)pix_data,2*(NPIX+100)); // Actual data: 3200 bytes
-            Serial.write((const uint8_t*)pix_data,40); // Padding: only 36 bytes since we complete our 98 x 64 bytes packet with an additional write 
+            Serial.write((const uint8_t*)start_frame,32); // Start of transmission string: 32 bytes
+            Serial.write((const uint8_t*)pix_sum,2*(NPIX+100)); // Actual data: 6200 bytes (3100 uint16_t)
+            Serial.write((const uint8_t*)pix_sum,40); // Padding: 40 bytes since we complete our 98 x 64 bytes packet with an additional write 
+            // A USB packet on the Teensy is sent if of size 64 bytes. Optimizes the transmission.
 
 
             send_data = 0x00;
