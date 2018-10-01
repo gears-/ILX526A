@@ -15,7 +15,6 @@ volatile uint8_t send_data = 0x00;
 volatile uint16_t pix_data[NPIX+100] = {0}; // Padding
 volatile uint16_t pix_buffer[NPIX+100] = {0};
 volatile uint16_t pix_sum[2*(NPIX+100)] = {0};
-volatile uint16_t tmp_data = 0x10;
 
 /* 
  * Function: setup_dma_portc
@@ -35,42 +34,24 @@ void setup_dma_portc() {
     // Use a single DMA channel triggered on the ADC to grab data from PORTC
     // Source: GPIOC_PDIR -> all of Port C  (12 bits on the Teensy, though the register is 32 bits)
     dma_portc.source(GPIOC_PDIR);
-//    dma_portc.source(tmp_data);
 
     // Size
     dma_portc.transferSize(2); // 2 bytes = 16 bits
     dma_portc.transferCount(1); // Only one transfer 
 
     // Destination
-    // destinationCircular from DMAchannels.h sets up a lot of the DMA transfer registers so we don't have to
-    // A circular buffer should work since we do our NPIX + 100 ADC transfers THEN we send the data IMMEDIATELY to the host.
-    // There is no risk for data to be overwritten
-    // DADDR = &pix_buffer --- address of the first destination
+    // DADDR = &pix_buffer[0] --- address of the first destination
     // DOFF = 2 --- offset in bytes to find the next destination
     // BITER, CITER = 2*(NPIX+100)/2 --- number of major loops to transfer i.e. number of times 2 bytes are transferred
     // NBYTES = 2 --- 2 bytes transferred per major loop count
-    // ATTR_DST = (31-clz(NPIX+100)) << 3 | 1 --- the OR operation sets the first three bits of the register: size of the destination location; here 2 bytes 
-    // The clz operation is a trick to remove the leading zeros of the modulo value (here NPIX+100). 31 - clz(NPIX+100) sets the bit value of the modulo.
-    // It is shifted to the left by three bits so that bits 3 through 7 in the register are set to the closest power of 2 from NPIX+100 and enable the modulo operation.
-    // DLAST_SGA = 0 --- circular buffer: once done with each major iteration we use the modulo counter to find the next address 
-//    dma_portc.destinationCircular(pix_buffer,2*(NPIX+100));
+    // ATTR_DST -> DMOD = 0; DSIZE = 001: no modulo operation, 2 bytes destination 
+    // DLAST_SGA = -2*(NPIX+100) --- Loop back to BUF_SIZE * 2 bytes 
     dma_portc.TCD->DADDR = &pix_buffer[0];
     dma_portc.TCD->BITER = BUF_SIZE;
     dma_portc.TCD->CITER = BUF_SIZE;
     dma_portc.TCD->DOFF = 2;
     dma_portc.TCD->DLASTSGA = -2*BUF_SIZE;
     dma_portc.TCD->ATTR_DST = 1;
-
-
-//DMA_TCD1_DADDR = samples;
-//  DMA_TCD1_DOFF = 2; // Destination offset (2 byte)
-//          DMA_TCD1_DLASTSGA = -sizeof(samples);  // Restore destination address after major loop
-//                  DMA_TCD1_ATTR = DMA_TCD_ATTR_SSIZE(1) | DMA_TCD_ATTR_DSIZE(1); // Source and destination size 16 bit
-//                          DMA_TCD1_NBYTES_MLNO = 2; // Number of bytes to transfer (in each service request)
-//                                  DMA_TCD1_CITER_ELINKNO = sizeof(samples) / 2; // Set loop counts
-//                                      DMA_TCD1_BITER_ELINKNO = sizeof(samples) / 2;
-//                                              DMA_TCD1_CSR = DMA_TCD_CSR_INTMAJOR; // Enable interrupt (end-of-major loop)
-
 
     // Trigger on falling edge of FTM1
     // Since PORTB only has the ADC clock running, we can trigger on all of port B (how convenient is that?)
