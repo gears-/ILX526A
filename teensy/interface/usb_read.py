@@ -4,7 +4,7 @@ import serial
 import matplotlib.pyplot as plt
 
 ser = serial.Serial('/dev/ttyACM0')
-np.set_printoptions(threshold=np.inf)
+#np.set_printoptions(threshold=np.inf)
 
 # See https://stackoverflow.com/questions/7100242/python-numpy-first-occurrence-of-subarray
 def rolling_window(a, size):
@@ -63,14 +63,19 @@ data = np.zeros(NELEM_BYTES,dtype=np.uint8)
 nelem, partial_array = read_buffer(data,start_frame)
 
 data16 = data.view(dtype=np.uint16)
-#print(data)
-#print(data.astype(np.uint16))
-#print(data16,np.max(data16),data16.size)
-#print(current)
-#print(nelem,partial_array)
 
+### PLOT
+fig = plt.figure()
+ax = fig.add_subplot(111)
 
-print(data16,np.max(data16),data16.size,nelem,partial_array)
+li, = ax.plot(data16)
+
+# Draw and show it
+ax.relim() 
+ax.autoscale_view(True,True,True)
+fig.canvas.draw()
+plt.show(block=False)
+
 
 while True:
     # If we had a partial array, then we grab the next buffer line and fill the rest with the beginning of the array
@@ -87,7 +92,10 @@ while True:
     # Otherwise, the previous data was fine, so we can now try to fill the buffer again
     else:
         print(data16,np.max(data16),data16.size,nelem,partial_array)
-        #print(data,np.max(data16),data16.size,nelem,partial_array)
+        li.set_ydata(data16)
+        fig.canvas.draw()
+    
+
         # Reinitialize our data holder
         data = np.zeros(NELEM_BYTES,dtype=np.uint8)
         data16 = np.zeros(NELEM,dtype=np.uint16)
