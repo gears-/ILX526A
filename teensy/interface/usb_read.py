@@ -56,6 +56,7 @@ start_frame = np.fromstring(SOT,dtype=np.uint8)
 NELEM = 3100
 NELEM_BYTES = 2*NELEM
 BUF_SIZE = 6400
+NAVE = 10 # Number of frame averages
 
 # Holder for data
 data = np.zeros(NELEM_BYTES,dtype=np.uint8)
@@ -64,17 +65,23 @@ nelem, partial_array = read_buffer(data,start_frame)
 
 data16 = data.view(dtype=np.uint16)
 
+# Averaging quantities
+data_ave = np.zeros(NELEM,dtype=np.uint32) 
+idx = 0 
+
 ### PLOT
 fig = plt.figure()
 ax = fig.add_subplot(111)
 
 li, = ax.plot(data16)
+li_ave, = ax.plot(data_ave)
 
 # Draw and show it
 ax.relim() 
 ax.autoscale_view(True,True,True)
 fig.canvas.draw()
 plt.show(block=False)
+
 
 
 while True:
@@ -94,8 +101,18 @@ while True:
         print(data16,np.max(data16),data16.size,nelem,partial_array)
         li.set_ydata(data16)
         fig.canvas.draw()
-    
 
+        # Accumulate the averaged data if we have not reached the number of samples
+        if idx < NAVE:
+            data_ave += data16
+            idx = idx + 1
+        # Otherwise, calculate actual average and update plot
+        else:
+            idx = 0
+            data_ave = data_ave / NAVE
+            li_ave.set_ydata(data_ave)
+            data_ave = np.zeros(NELEM,dtype=np.uint32) 
+    
         # Reinitialize our data holder
         data = np.zeros(NELEM_BYTES,dtype=np.uint8)
         data16 = np.zeros(NELEM,dtype=np.uint16)
