@@ -4,6 +4,7 @@ import serial
 import matplotlib.pyplot as plt
 
 ser = serial.Serial('/dev/ttyACM0')
+np.set_printoptions(threshold=np.inf)
 
 # See https://stackoverflow.com/questions/7100242/python-numpy-first-occurrence-of-subarray
 def rolling_window(a, size):
@@ -86,6 +87,7 @@ while True:
     # Otherwise, the previous data was fine, so we can now try to fill the buffer again
     else:
         print(data16,np.max(data16),data16.size,nelem,partial_array)
+        #print(data,np.max(data16),data16.size,nelem,partial_array)
         # Reinitialize our data holder
         data = np.zeros(NELEM_BYTES,dtype=np.uint8)
         data16 = np.zeros(NELEM,dtype=np.uint16)
