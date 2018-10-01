@@ -25,7 +25,7 @@ volatile uint16_t pix_sum[2*(NPIX+100)] = {0};
 void setup_dma_portc() {
     // Define all of our inputs
     for(int idx = 0; idx < NBIT; ++idx) {
-        pinMode(portc_pins[idx],INPUT);
+        pinMode(portc_pins[idx],INPUT_PULLDOWN);
     }    
 
     // Enable DMA requests for FTM1, on the rising edge of port 17 (that's the ADC) 
@@ -112,20 +112,6 @@ void setup_dma_buffer_transfer() {
     dma_enable_send.transferCount(1);
     dma_enable_send.triggerAtCompletionOf(dma_buffer_transfer);
     dma_enable_send.enable();
-
-    // The setup below can be used if we have a buffer we fill twice before averaging
-   // dma_buffer_transfer.TCD->CITER  = 2;
-   // dma_buffer_transfer.TCD->BITER  = 2;
-   // dma_buffer_transfer.TCD->DLASTSGA = -4*(NPIX+100);
-    // Enables an interrupt at half to reset the source address...
-    // There may be a more elegant way to do that
-//    dma_buffer_transfer.interruptAtHalf();
-//    dma_buffer_transfer.attachInterrupt(isr_buffer_transfer_src_reset);
-
-
-//    dma_enable_send.interruptAtCompletion();
-//    dma_enable_send.attachInterrupt(isr_buffer_transfer);
-
 }
 
 
