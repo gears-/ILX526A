@@ -4,7 +4,7 @@ import serial
 import matplotlib.pyplot as plt
 
 ser = serial.Serial('/dev/ttyACM0')
-#np.set_printoptions(threshold=np.inf)
+np.set_printoptions(threshold=np.inf)
 
 # See https://stackoverflow.com/questions/7100242/python-numpy-first-occurrence-of-subarray
 def rolling_window(a, size):
@@ -52,21 +52,27 @@ def read_buffer(data,start_frame):
 SOT = "7eae261ddde24eeda293a7cd17e4379a" 
 start_frame = np.fromstring(SOT,dtype=np.uint8)
 
-# Number of elems
-NELEM = 3100
-NELEM_BYTES = 2*NELEM
-BUF_SIZE = 6400
-NAVE = 10 # Number of frame averages
+# 
+NELEM = 3100 # Number of elements from the CCD
+NPIX = 3000 # Number of actual pixels
+NELEM_BYTES = 2*NELEM # Number of elements from the CCD, in bytes 
+BUF_SIZE = 6272 # Buffer size in bytes (98 packets of 64 bytes) 
 
-# Holder for data
+# ADC and averaging
+ADC_RES = 4095 # ADC resolution (12 bits)
+ADC_V = 5 # ADC operating voltage (5 V)
+
+# Holders for data
 data = np.zeros(NELEM_BYTES,dtype=np.uint8)
 
 nelem, partial_array = read_buffer(data,start_frame)
 
-data16 = data.view(dtype=np.uint16)
+data16 = data.view(dtype=np.uint16) # This is of size 3100 pixels
+data_V = np.zeros(NELEM,dtype=np.float64) # This is of size 3100 pixels
 
 # Averaging quantities
-data_ave = np.zeros(NELEM,dtype=np.uint32) 
+NAVE = 10 # Number of frame averages
+data_ave = np.zeros(NELEM,dtype=np.float64) 
 idx = 0 
 
 ### PLOT
@@ -81,6 +87,9 @@ ax.relim()
 ax.autoscale_view(True,True,True)
 fig.canvas.draw()
 plt.show(block=False)
+
+plt.ylim([0,5])
+plt.xlim([0,NELEM])
 
 
 
@@ -98,20 +107,25 @@ while True:
         partial_array = False
     # Otherwise, the previous data was fine, so we can now try to fill the buffer again
     else:
-        print(data16,np.max(data16),data16.size,nelem,partial_array)
-        li.set_ydata(data16)
+        #print(data16,np.max(data16),data16.size,nelem,partial_array)
+        # Convert to voltage and plot
+        data_V = ADC_V / ADC_RES * data16 
+        print(data16[0:100])
+
+        li.set_ydata(data_V)
         fig.canvas.draw()
 
         # Accumulate the averaged data if we have not reached the number of samples
         if idx < NAVE:
-            data_ave += data16
+            data_ave += data_V
             idx = idx + 1
         # Otherwise, calculate actual average and update plot
         else:
             idx = 0
             data_ave = data_ave / NAVE
             li_ave.set_ydata(data_ave)
-            data_ave = np.zeros(NELEM,dtype=np.uint32) 
+            print(np.average(data_ave))
+            data_ave = np.zeros(NELEM,dtype=np.float64) 
     
         # Reinitialize our data holder
         data = np.zeros(NELEM_BYTES,dtype=np.uint8)
