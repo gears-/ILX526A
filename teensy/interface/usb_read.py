@@ -72,14 +72,12 @@ data16_p1 = data_p1[0:6200].view(dtype=np.uint16)
 
 data_V = np.zeros(NELEM,dtype=np.float64) # This is of size 3100 pixels
 data_plot = np.zeros(len(data16),dtype=np.float64)
-data_plot_p1 = data_plot
 
 #### PLOT
 fig = plt.figure()
 ax = fig.add_subplot(111)
 data_plot = 1.0*data16 + 1.0*data16_p1
 li, = ax.plot(data_plot,'.')
-li_p1, = ax.plot(data_plot_p1,'x')
 
 # Draw and show it
 ax.relim() 
@@ -97,17 +95,13 @@ while True:
     data16 = data[0:6200].view(dtype=np.uint16) # This is of size 3100 pixels
     data16_p1 = data_p1[0:6200].view(dtype=np.uint16)
 
-    #data_plot = 1.0*data16 + 1.0*data16_p1
-    data_plot = 1.0*data16 
-    data_plot_p1 = 1.0*data16_p1
+    data_plot = 1.0*data16 + 1.0*data16_p1
     data_plot *= ADC_V / ADC_RES
-    data_plot_p1 *= ADC_V / ADC_RES
 
     data = np.zeros(BUF_SIZE,dtype=np.uint8) # Data for second half of packet
     data_p1 = np.zeros(BUF_SIZE,dtype=np.uint8) # Data for first half of packet
 
     li.set_ydata(data_plot)
-    li_p1.set_ydata(data_plot_p1)
     fig.canvas.draw()
 
 
