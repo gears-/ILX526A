@@ -5,6 +5,7 @@
 DMAChannel dma_rog; // DMA to start the ADC
 DMAChannel dma_enable_rog; // DMA to enable the ROG channel
 extern DMAChannel dma_shut;
+extern DMAChannel dma_mask_ftm1;
 
 
 /*
@@ -27,6 +28,7 @@ void isr_dma_rog() {
     // Enable SHUT
     mux = (volatile uint8_t *)&(DMAMUX0_CHCFG0) + dma_shut.channel;
     *mux |= DMAMUX_ENABLE;
+    dma_mask_ftm1.enable();
     dma_shut.enable();
     CORE_PIN5_CONFIG |= PORT_PCR_IRQC(2);
 }
@@ -51,10 +53,10 @@ volatile uint8_t adc_start = 0x00;
  *  
  */
 void setup_dma_rog() {  
-    // Enable DMA requests on :
-    // - falling edge of pin 6 (ROG)
+    //// Enable DMA requests on falling edge of pin 6 (ROG)
     CORE_PIN6_CONFIG |= PORT_PCR_IRQC(2);
 
+    //// DMA to unmask the ADC
     dma_rog.source(adc_start);
     dma_rog.destination(FTM1_OUTMASK);
 
