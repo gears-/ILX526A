@@ -19,6 +19,8 @@ uint32_t exposure = 240000-1;
 char ret = '\n';
 uint32_t start_frame = (uint32_t)SOT; 
 
+uint8_t blank_frame[40] = {0};
+
 // Main loop
 extern "C" int main(void) {
     // Set the pin 26 as an output for data indication
@@ -77,22 +79,25 @@ extern "C" int main(void) {
 
         // Should we send data?
         if( send_data == 0x01 ) {
+#ifdef __DEBUG__
             digitalWrite(26,HIGH);
-            
+#endif
+            //for(int i = 0; i < NPIX+100;++i) {
+            //    pix_data[i] = pix_buffer[i];
+            //    pix_buffer[i] = 0;
+            //}
 
-            for(int i = 0; i < NPIX+100;++i)
-//                pix_data[i] = i;
-                pix_data[i] = pix_sum[i] + pix_sum[i+NPIX+100];
-
+            //// DATA FRAME
             // Send the data cast a uint8_t since Serial.write does not work w/ uint16_t types 
             Serial.write((const uint8_t*)start_frame,32); // Start of transmission string: 32 bytes
             Serial.write((const uint8_t*)pix_sum,2*(NPIX+100)); // Actual data: 6200 bytes (3100 uint16_t)
-            Serial.write((const uint8_t*)pix_sum,40); // Padding: 40 bytes since we complete our 98 x 64 bytes packet with an additional write 
+            Serial.write((const uint8_t*)blank_frame,40); // Padding: 40 bytes since we complete our 98 x 64 bytes packet with an additional write 
             // A USB packet on the Teensy is sent if of size 64 bytes. Optimizes the transmission.
 
-
-            send_data = 0x00;
+#ifdef __DEBUG__
             digitalWrite(26,LOW);
+#endif
+            send_data = 0x00;
         }
     }
 
