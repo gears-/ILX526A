@@ -158,13 +158,19 @@ void pit0_isr(void) {
     GPIOE_PDOR = 0xFFFF;
     GPIOE_PDOR = 0x0000;
 
-    // Clear it
+    //// Clear the ISR 
     PIT_TFLG0 = 1;
 
+    //// Re-enable the ADC and CCD as FTM1
     // PCR_MUX -> PIN MUX CONTROL b011 (p228): alternative 3 (i.e. FTM1_CH1)
+    // CCD 
+    CORE_PIN3_CONFIG &= ~PORT_PCR_MUX(1);
+    CORE_PIN3_CONFIG |= PORT_PCR_MUX(3);
+    // ADC
+    CORE_PIN17_CONFIG &= ~PORT_PCR_MUX(1);
     CORE_PIN17_CONFIG |= PORT_PCR_MUX(3);
 
-    // Start the FTM0 and FTM1 clocks again, but masks the ADC clock
+    //// Start the FTM0 and FTM1 clocks again, but masks the ADC clock
     SIM_SCGC6 |= SIM_SCGC6_FTM0 | SIM_SCGC6_FTM1; 
     FTM1_OUTMASK = 0x02;
     FTM1_CNT = 0;
