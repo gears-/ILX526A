@@ -29,9 +29,6 @@ void isr_dma_rog() {
     *mux |= DMAMUX_ENABLE;
     dma_shut.enable();
     CORE_PIN5_CONFIG |= PORT_PCR_IRQC(2);
-
-//    Serial.printf("DMA ROG interrupt - FTM1_OUTMASK: %d!\n",FTM1_OUTMASK);
-
 }
 
 
@@ -40,12 +37,13 @@ void isr_dma_rog() {
 // They correspond to each channel that use the timer.
 // Setting the corresponding bit to 0 unmasks a clock.
 // In this case, we unmask ALL FTM1 clocks (CCD and ADC)
+// Note that the CCD clock was already unmasked by the PIT0 ISR
 // See section 36.3.13 in processor doc
 volatile uint8_t adc_start = 0x00;
 
 /* 
  *  Function: setup_dma_rog
- *  Description: Start and stop the ADC clock with the DMA
+ *  Description: Starts with a DMA request
  *  The source of the start and stop is a mask byte residing in memory
  *  and transferred to FTM1_OUTMASK
  *  Start of the ADC corresponds to ROG going low
