@@ -75,8 +75,8 @@ data_plot = np.zeros(len(data16),dtype=np.float64)
 #### PLOT
 fig = plt.figure()
 ax = fig.add_subplot(111)
-data_plot = 1.0*data16 + 1.0*data16_p1
-li, = ax.plot(data_plot,'.')
+#data_plot = 1.0*data16 + 1.0*data16_p1
+li, = ax.plot(np.zeros(NPIX),'.')
 
 # Draw and show it
 ax.relim() 
@@ -94,13 +94,31 @@ while True:
     data16 = data[0:6200].view(dtype=np.uint16) # This is of size 3100 pixels
     data16_p1 = data_p1[0:6200].view(dtype=np.uint16)
 
+    # Full frame
+    # 0-22: dummy signals
+    # 23:52: optical black
+    # 53:54: dummy 
+    # 55:3054: data
+    # 3054:end: dummy
     data_plot = 1.0*data16 + 1.0*data16_p1
-    data_plot *= ADC_V / ADC_RES
+    data_plot *= ADC_V / ADC_RES # Rescale in Volts
+    data_plot = np.roll(data_plot,-3) # The ADC and CCD start at index -2; rolling this by -3 makes it start at "1" 
+
+    # Extract data
+    data_pix = data_plot[55:3055]
+    data_black = data_plot[23:53]
+    even_black = data_black[0::2]
+    even_black = np.average(even_black)
+    odd_black = data_black[0::2]
+    odd_black = np.average(odd_black)
+
+    data_pix[0::2] = data_pix[0::2] / odd_black
+    data_pix[1::2] = data_pix[1::2] / even_black
 
     data = np.zeros(BUF_SIZE,dtype=np.uint8) # Data for second half of packet
     data_p1 = np.zeros(BUF_SIZE,dtype=np.uint8) # Data for first half of packet
 
-    li.set_ydata(data_plot)
+    li.set_ydata(data_pix)
     fig.canvas.draw()
 
 
