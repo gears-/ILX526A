@@ -83,7 +83,7 @@ ax.relim()
 ax.autoscale_view(True,True,True)
 fig.canvas.draw()
 plt.show(block=False)
-plt.ylim([0,5])
+plt.ylim([0,1])
 
 pa = False # Partial array?
 while True:
@@ -114,6 +114,8 @@ while True:
 
     data_pix[0::2] = data_pix[0::2] / odd_black
     data_pix[1::2] = data_pix[1::2] / even_black
+
+    data_pix = np.abs(1-data_pix)
 
     data = np.zeros(BUF_SIZE,dtype=np.uint8) # Data for second half of packet
     data_p1 = np.zeros(BUF_SIZE,dtype=np.uint8) # Data for first half of packet
