@@ -4,8 +4,6 @@
 #include "setup_isr.h"
 #include "utils.h"
 
-#define __DEBUG__
-
 // Boolean signaling data needs sent 
 extern volatile uint8_t send_data;
 extern volatile uint16_t pix_sum[2*(NPIX+100)];
