@@ -20,8 +20,8 @@ void isr_dma_shut() {
 
     // Set the ADC clock low for next cycle
     CORE_PIN17_CONFIG &= ~PORT_PCR_MUX(3); 
-    CORE_PIN17_CONFIG |= PORT_PCR_MUX(0);
-    GPIOB_PDOR &= ~(1<<1);
+    CORE_PIN17_CONFIG |= PORT_PCR_MUX(1);
+    GPIOB_PDOR = 0;
 
     // Disable SHUT
     volatile uint8_t *mux;
