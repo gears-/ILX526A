@@ -2,12 +2,20 @@
 #include "DMAChannel.h"
 
 #include "setup_clk.h"
+#include "setup_dma_buffer.h"
 
 // DMA Channels
 DMAChannel dma_shut; // DMA to stop the ADC
 DMAChannel dma_enable_shut; // DMA to enable the SHUT channel
 DMAChannel dma_mask_ftm1; // DMA to mask FTM1
 extern DMAChannel dma_rog;
+
+extern DMAChannel dma_portc;
+
+#ifdef __DEBUG__
+extern DMAChannel dma_gpioe_low;
+extern DMAChannel dma_gpioe_high;
+#endif
 
 
 /*
@@ -19,7 +27,7 @@ extern DMAChannel dma_rog;
 void isr_dma_shut() {
     dma_shut.clearInterrupt();
 
-    //// Set the ADC and CCD clocks low for next cycle
+    //// Enforce the ADC and CCD clocks low for next cycle
     // ADC
     CORE_PIN17_CONFIG &= ~PORT_PCR_MUX(3); 
     CORE_PIN17_CONFIG |= PORT_PCR_MUX(1);
@@ -30,10 +38,11 @@ void isr_dma_shut() {
     CORE_PIN3_CONFIG |= PORT_PCR_MUX(1);
     GPIOA_PDOR = 0x0000;
 
-
+#ifdef __DEBUG__
     GPIOE_PDOR = 0x0000;
+#endif
 
-    // Disable the SHUT and MASK DMAs
+    //// Disable the SHUT and MASK DMAs
     volatile uint8_t *mux;
     mux = (volatile uint8_t *)&(DMAMUX0_CHCFG0) + dma_shut.channel;
     *mux &= ~DMAMUX_ENABLE;
@@ -41,14 +50,19 @@ void isr_dma_shut() {
     dma_mask_ftm1.disable();
     CORE_PIN5_CONFIG &= ~PORT_PCR_IRQC(0);
 
-    // Enable ROG
+    //// Enable ROG
     mux = (volatile uint8_t *)&(DMAMUX0_CHCFG0) + dma_rog.channel;
     *mux |= DMAMUX_ENABLE;
     dma_rog.enable();
     CORE_PIN6_CONFIG |= PORT_PCR_IRQC(2);
 
-    // Re-initializes the source of the DMA from PORTC
-    // TODO
+    //// Re-initializes the source of the DMA from PORTC
+    dma_portc.disable();
+#ifdef __DEBUG__
+    dma_gpioe_low.disable();
+    dma_gpioe_high.disable();
+#endif
+    setup_dma_portc();
 }
 
 /*
