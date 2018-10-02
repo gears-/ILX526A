@@ -6,6 +6,9 @@
 DMAChannel dma_portc; // DMA for reading PORTC
 DMAChannel dma_buffer_transfer;
 DMAChannel dma_enable_send;
+DMAChannel dma_gpioe_low;
+DMAChannel dma_gpioe_high;
+
 extern DMAChannel dma_exposure_cnt_start;
 
 // List of pins mapped to the ADC output
@@ -22,6 +25,18 @@ volatile uint16_t pix_sum[2*(NPIX+100)] = {0};
  * Poll the register GPIOC_PDIR and transfer its content into the pixel of interest
  * Half of GPIOC_PDIR register is transferred (16 bits) since we care only about the first 12 bits
  */
+
+/*
+ * A service request initiates a transfer of a specific number of
+ * bytes (NBYTES) as specified in the transfer control descriptor
+ * (TCD). The minor loop is the sequence of read-write
+ * operations that transfers these NBYTES per service request.
+ * Each service request executes one iteration of the major loop,
+ * which transfers NBYTES of data
+ *
+ */
+uint16_t tmp_data = 0xFFFF;
+uint16_t tmp_data_low = 0x0000;
 void setup_dma_portc() {
     // Define all of our inputs
     for(int idx = 0; idx < NBIT; ++idx) {
@@ -36,8 +51,14 @@ void setup_dma_portc() {
     dma_portc.source(GPIOC_PDIR);
 
     // Size
-    dma_portc.transferSize(2); // 2 bytes = 16 bits
-    dma_portc.transferCount(1); // Only one transfer 
+//    dma_portc.transferSize(2); // 2 bytes = 16 bits
+//    dma_portc.transferCount(1); // Only one transfer 
+//    dma_portc.TCD->SADDR = &GPIOC_PDIR;
+    dma_portc.TCD->SADDR = &tmp_data;
+    dma_portc.TCD->SOFF = 0;
+    dma_portc.TCD->ATTR_SRC = 1;
+    dma_portc.TCD->SLAST = 0;
+    dma_portc.TCD->NBYTES = 2;
 
     // Destination
     // DADDR = &pix_buffer[0] --- address of the first destination
@@ -46,18 +67,64 @@ void setup_dma_portc() {
     // NBYTES = 2 --- 2 bytes transferred per major loop count
     // ATTR_DST -> DMOD = 0; DSIZE = 001: no modulo operation, 2 bytes destination 
     // DLAST_SGA = -2*(NPIX+100) --- Loop back to BUF_SIZE * 2 bytes 
+    
     dma_portc.TCD->DADDR = &pix_buffer[0];
-    dma_portc.TCD->BITER = BUF_SIZE;
-    dma_portc.TCD->CITER = BUF_SIZE;
+    //dma_portc.TCD->BITER = BUF_SIZE;
+    //dma_portc.TCD->CITER = BUF_SIZE;
+    uint8_t ntransfer = 2;
+    dma_portc.TCD->BITER = ntransfer;
+    dma_portc.TCD->CITER = ntransfer;
     dma_portc.TCD->DOFF = 2;
-    dma_portc.TCD->DLASTSGA = -2*BUF_SIZE;
+    dma_portc.TCD->DLASTSGA = -2*ntransfer;
     dma_portc.TCD->ATTR_DST = 1;
+    
+
+    /*
+    dma_portc.TCD->DADDR = &GPIOE_PDOR;
+    dma_portc.TCD->BITER = 2;
+    dma_portc.TCD->CITER = 2;
+    dma_portc.TCD->DOFF = 0;
+    dma_portc.TCD->DLASTSGA = 0;
+    dma_portc.TCD->ATTR_DST = 1;
+    */
+    dma_gpioe_high.TCD->SADDR = &tmp_data;
+    dma_gpioe_high.TCD->SOFF = 0;
+    dma_gpioe_high.TCD->ATTR_SRC = 1;
+    dma_gpioe_high.TCD->SLAST = 0;
+    dma_gpioe_high.TCD->NBYTES = 2;
+    dma_gpioe_high.TCD->DADDR = &GPIOE_PDOR;
+    dma_gpioe_high.TCD->BITER = 1;
+    dma_gpioe_high.TCD->CITER = 1;
+    dma_gpioe_high.TCD->DOFF = 0;
+    dma_gpioe_high.TCD->DLASTSGA = 0;
+    dma_gpioe_high.TCD->ATTR_DST = 1;
+
+    dma_gpioe_low.TCD->SADDR = &tmp_data_low;
+    dma_gpioe_low.TCD->SOFF = 0;
+    dma_gpioe_low.TCD->ATTR_SRC = 1;
+    dma_gpioe_low.TCD->SLAST = 0;
+    dma_gpioe_low.TCD->NBYTES = 2;
+    dma_gpioe_low.TCD->DADDR = &GPIOE_PDOR;
+    dma_gpioe_low.TCD->BITER = 1;
+    dma_gpioe_low.TCD->CITER = 1;
+    dma_gpioe_low.TCD->DOFF = 0;
+    dma_gpioe_low.TCD->DLASTSGA = 0;
+    dma_gpioe_low.TCD->ATTR_DST = 1;
+
 
     // Trigger on falling edge of FTM1
     // Since PORTB only has the ADC clock running, we can trigger on all of port B (how convenient is that?)
     // Having a DMA on the falling edge allows for data to be valid
+    // DMAMUX_SOURCE_PORTB is defined as "50" in kinetis.h. See Table 3-18 pp78-79 to get the listing of DMA sources and their corresponding numbers.
+    //
     dma_portc.triggerAtHardwareEvent(DMAMUX_SOURCE_PORTB);
     dma_portc.enable();
+
+    dma_gpioe_high.triggerAtCompletionOf(dma_portc);
+    dma_gpioe_high.enable();
+
+    dma_gpioe_low.triggerAtCompletionOf(dma_gpioe_high);
+    dma_gpioe_low.enable();
 }
 
 /*
@@ -75,9 +142,9 @@ void setup_dma_buffer_transfer() {
     //// TEST DATA
     for(int i = 0;i<BUF_SIZE;++i) {
         //pix_buffer[i] = BUF_SIZE-i;
-        //pix_buffer[i] = i;
-        pix_buffer[i] = 0;
-        pix_data[i] = 0;
+        pix_buffer[i] = i;
+        //pix_buffer[i] = 0;
+        //pix_data[i] = 0;
     }
 
     for(int i = 0;i<2*BUF_SIZE;++i)
