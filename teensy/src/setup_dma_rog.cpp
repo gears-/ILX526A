@@ -4,8 +4,10 @@
 // DMA Channels
 DMAChannel dma_rog; // DMA to start the ADC
 DMAChannel dma_enable_rog; // DMA to enable the ROG channel
+//DMAChannel dma_enable_portc_transfer; // DMA to enable the transfers from PORTC to the buffer
 extern DMAChannel dma_shut;
 extern DMAChannel dma_mask_ftm1;
+extern DMAChannel dma_portc;
 
 
 /*
@@ -41,7 +43,7 @@ void isr_dma_rog() {
 // In this case, we unmask ALL FTM1 clocks (CCD and ADC)
 // Note that the CCD clock was already unmasked by the PIT0 ISR
 // See section 36.3.13 in processor doc
-volatile uint8_t adc_start = 0x00;
+const uint8_t adc_start = 0x00;
 
 /* 
  *  Function: setup_dma_rog
@@ -56,7 +58,7 @@ void setup_dma_rog() {
     //// Enable DMA requests on falling edge of pin 6 (ROG)
     CORE_PIN6_CONFIG |= PORT_PCR_IRQC(2);
 
-    //// DMA to unmask the ADC
+    //// DMA to unmask the ADC, chained from the PORTC one
     dma_rog.source(adc_start);
     dma_rog.destination(FTM1_OUTMASK);
 
@@ -64,13 +66,11 @@ void setup_dma_rog() {
     dma_rog.transferCount(1);
 
     dma_rog.triggerAtHardwareEvent(DMAMUX_SOURCE_PORTD);
-
     dma_rog.disableOnCompletion();
 
     dma_rog.interruptAtCompletion();
     dma_rog.attachInterrupt(isr_dma_rog);
 
     dma_rog.enable();
-
 }
 
