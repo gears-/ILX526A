@@ -82,7 +82,9 @@ void adc_clk() {
     // Timer period
     FTM1_MOD = 47;
     
-    // Pin configuration - no slew rate
+    // Pin configuration
+    // PCR_DSE -> no slew rate
+    // PCR_MUX -> PIN MUX CONTROL b011 (p228): alternative 3 (i.e. FTM1_CH1)
     CORE_PIN17_CONFIG = PORT_PCR_MUX(3) | PORT_PCR_DSE;
 
     // We mask the ADC clock (channel 1) until it is triggered
@@ -152,9 +154,14 @@ void pwm_clk() {
  *
  */
 void pit0_isr(void) {
+    // Debugging
+    GPIOE_PDOR = 0xFFFF;
+    GPIOE_PDOR = 0x0000;
+
     // Clear it
     PIT_TFLG0 = 1;
 
+    // PCR_MUX -> PIN MUX CONTROL b011 (p228): alternative 3 (i.e. FTM1_CH1)
     CORE_PIN17_CONFIG |= PORT_PCR_MUX(3);
 
     // Start the clocks again
