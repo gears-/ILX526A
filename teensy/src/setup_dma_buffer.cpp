@@ -6,8 +6,11 @@
 DMAChannel dma_portc; // DMA for reading PORTC
 DMAChannel dma_buffer_transfer;
 DMAChannel dma_enable_send;
+
+#ifdef __DEBUG__
 DMAChannel dma_gpioe_low;
 DMAChannel dma_gpioe_high;
+#endif
 
 extern DMAChannel dma_exposure_cnt_start;
 
@@ -38,23 +41,24 @@ volatile uint16_t pix_sum[2*(NPIX+100)] = {0};
 uint16_t tmp_data = 0xFFFF;
 uint16_t tmp_data_low = 0x0000;
 void setup_dma_portc() {
-    // Define all of our inputs
+    //// PORTC: inputs with the internal 20-50 kOhm pull-down (see datasheet Table 5.2.3) 
     for(int idx = 0; idx < NBIT; ++idx) {
         pinMode(portc_pins[idx],INPUT_PULLDOWN);
     }    
 
-    // Enable DMA requests for FTM1, on the rising edge of port 17 (that's the ADC) 
+    //// Enable DMA requests for FTM1, on the rising edge of port 17 (that's the ADC) 
     CORE_PIN17_CONFIG |= PORT_PCR_IRQC(1);
 
+    //// DMA Channel setup for ADC data  
     // Use a single DMA channel triggered on the ADC to grab data from PORTC
-    // Source: GPIOC_PDIR -> all of Port C  (12 bits on the Teensy, though the register is 32 bits)
-    dma_portc.source(GPIOC_PDIR);
 
-    // Size
-//    dma_portc.transferSize(2); // 2 bytes = 16 bits
-//    dma_portc.transferCount(1); // Only one transfer 
-//    dma_portc.TCD->SADDR = &GPIOC_PDIR;
-    dma_portc.TCD->SADDR = &tmp_data;
+    // Source
+    // SADDR = &GPIOC_PDIR --- all of Port C  (12 bits on the Teensy, though the register is 32 bits)
+    // SOFF = 0 --- always the same source
+    // ATTR_SRC -> DMOD = 0; DSIZE = 001 --- no modulo operation, 2 bytes destination 
+    // SLAST = 0 --- always the same source
+    // NBYTES = 2 --- 16 bits bus 
+    dma_portc.TCD->SADDR = &GPIOC_PDIR;
     dma_portc.TCD->SOFF = 0;
     dma_portc.TCD->ATTR_SRC = 1;
     dma_portc.TCD->SLAST = 0;
@@ -63,30 +67,18 @@ void setup_dma_portc() {
     // Destination
     // DADDR = &pix_buffer[0] --- address of the first destination
     // DOFF = 2 --- offset in bytes to find the next destination
-    // BITER, CITER = 2*(NPIX+100)/2 --- number of major loops to transfer i.e. number of times 2 bytes are transferred
+    // BITER, CITER = 2*BUF_SIZE/2 --- number of major loops to transfer i.e. number of times 2 bytes are transferred
     // NBYTES = 2 --- 2 bytes transferred per major loop count
-    // ATTR_DST -> DMOD = 0; DSIZE = 001: no modulo operation, 2 bytes destination 
-    // DLAST_SGA = -2*(NPIX+100) --- Loop back to BUF_SIZE * 2 bytes 
-    
+    // ATTR_DST -> DMOD = 0; DSIZE = 001 --- no modulo operation, 2 bytes destination 
+    // DLAST_SGA = -2*BUF_SIZE --- Loop back to BUF_SIZE * 2 bytes 
     dma_portc.TCD->DADDR = &pix_buffer[0];
-    //dma_portc.TCD->BITER = BUF_SIZE;
-    //dma_portc.TCD->CITER = BUF_SIZE;
-    uint8_t ntransfer = 2;
-    dma_portc.TCD->BITER = ntransfer;
-    dma_portc.TCD->CITER = ntransfer;
+    dma_portc.TCD->BITER = BUF_SIZE;
+    dma_portc.TCD->CITER = BUF_SIZE;
     dma_portc.TCD->DOFF = 2;
-    dma_portc.TCD->DLASTSGA = -2*ntransfer;
+    dma_portc.TCD->DLASTSGA = -2*BUF_SIZE;
     dma_portc.TCD->ATTR_DST = 1;
-    
 
-    /*
-    dma_portc.TCD->DADDR = &GPIOE_PDOR;
-    dma_portc.TCD->BITER = 2;
-    dma_portc.TCD->CITER = 2;
-    dma_portc.TCD->DOFF = 0;
-    dma_portc.TCD->DLASTSGA = 0;
-    dma_portc.TCD->ATTR_DST = 1;
-    */
+#ifdef __DEBUG__
     dma_gpioe_high.TCD->SADDR = &tmp_data;
     dma_gpioe_high.TCD->SOFF = 0;
     dma_gpioe_high.TCD->ATTR_SRC = 1;
@@ -110,21 +102,22 @@ void setup_dma_portc() {
     dma_gpioe_low.TCD->DOFF = 0;
     dma_gpioe_low.TCD->DLASTSGA = 0;
     dma_gpioe_low.TCD->ATTR_DST = 1;
-
+#endif
 
     // Trigger on falling edge of FTM1
     // Since PORTB only has the ADC clock running, we can trigger on all of port B (how convenient is that?)
     // Having a DMA on the falling edge allows for data to be valid
     // DMAMUX_SOURCE_PORTB is defined as "50" in kinetis.h. See Table 3-18 pp78-79 to get the listing of DMA sources and their corresponding numbers.
-    //
     dma_portc.triggerAtHardwareEvent(DMAMUX_SOURCE_PORTB);
     dma_portc.enable();
 
+#ifdef __DEBUG__
     dma_gpioe_high.triggerAtCompletionOf(dma_portc);
     dma_gpioe_high.enable();
 
     dma_gpioe_low.triggerAtCompletionOf(dma_gpioe_high);
     dma_gpioe_low.enable();
+#endif
 }
 
 /*
@@ -142,8 +135,8 @@ void setup_dma_buffer_transfer() {
     //// TEST DATA
     for(int i = 0;i<BUF_SIZE;++i) {
         //pix_buffer[i] = BUF_SIZE-i;
-        pix_buffer[i] = i;
-        //pix_buffer[i] = 0;
+        //pix_buffer[i] = i;
+        pix_buffer[i] = 0;
         //pix_data[i] = 0;
     }
 
@@ -169,7 +162,6 @@ void setup_dma_buffer_transfer() {
    
     // The DMA triggers during the exposure time 
     dma_buffer_transfer.triggerAtCompletionOf(dma_exposure_cnt_start);
-
     dma_buffer_transfer.enable();
 
     //// DMA request to trigger the buffer being sent
