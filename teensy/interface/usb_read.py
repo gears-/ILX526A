@@ -33,7 +33,6 @@ def read_buffer(data,start_frame,partial_array):
     if partial_array:
         end_idx = array_idx[0]
         nelem = len(current[0:end_idx])
-        print("Partial = True",array_idx,end_idx,nelem)
         np.copyto(data[len(data)-nelem-32:len(data)-32],current[0:end_idx])
         partial_array = False
 
