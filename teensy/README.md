@@ -1,10 +1,11 @@
 ILX526A
 ------
 The code in this repository is used to drive an ILX526A CCD array with a Teensy 3.2. It assumes that the CCD array operates in the S/H mode.
-The ILX526A documentation that details the timing requirements can be found [here](http://www.eureca.de/datasheets/01.xx.xxxx/01.01.xxxx/01.01.0021/ILX526A.pdf) 
-An additional clock is generated to drive an ADC (ADS803U) external to the CCD array. 
+An ADC is used to digitize the data coming out of the array.
 
-The datasheet for the Cortex M4 processor that equips the Teensy 3.2 (MK20DX256VLH7) can be found [here](https://www.pjrc.com/teensy/K20P64M72SF1RM.pdf). 
+### Documentation
+- [ILX526A documentation with timing requirements](http://www.eureca.de/datasheets/01.xx.xxxx/01.01.xxxx/01.01.0021/ILX526A.pdf) 
+- [Datasheet for the Cortex M4 processor that equips the Teensy 3.2 (MK20DX256VLH7)](https://www.pjrc.com/teensy/K20P64M72SF1RM.pdf). 
 
 ### Cycle
 The CCD is grabbing data continuously. The CCD data is digitized after the read-out gate (ROG) goes high. This marks the start of the cycle. 
@@ -88,7 +89,7 @@ The table below outlines the different bus clock values one can obtain based on 
 | 72 | 36 |
 | 48 | 48 |
 
-The maximum signal one can generate from FTM is 1/2 of the bus clock. This corresponds to 24 MHz.
+The maximum signal frequency one can generate from FTM is 1/2 of the bus clock. This corresponds to 24 MHz.
 
 
 ### FAQ
