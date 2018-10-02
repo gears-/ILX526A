@@ -34,9 +34,11 @@
 // 3059 pixels @ 1 MHz = 36708 cycles @ 12 MHz 
 // Add in 500 ns for 1/2 cycle of pixel D58, then 166 ns for timing requirements
 // Corresponds to 6 cycles @ 12 MHz + 2 cycles @ 12 MHz
-// Leave SHUT up for 5 us: 60 cycles @ 12 MHz
+// Leave SHUT up to complete 3100 pixels, without counting the 10 pixels from ROG:
+// - 3100 - (NPIX + NDUMMY0 + NDUMMY) = 41 => 41*12 = 492 cycles @ 12 MHz
+#define SHUT_DUMMY (BUF_SIZE-NPIX-NDUMMY0-NDUMMY1)
 #define SHUT_UP (ROG_NEXT_CCD_UP + (NPIX + NDUMMY0 + NDUMMY1)*12 + 6 + 2)
-#define SHUT_DURATION (SHUT_UP + 5*12) 
+#define SHUT_DURATION (SHUT_UP + SHUT_DUMMY*12) 
 
 
 
