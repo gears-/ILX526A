@@ -164,7 +164,7 @@ void pit0_isr(void) {
     // PCR_MUX -> PIN MUX CONTROL b011 (p228): alternative 3 (i.e. FTM1_CH1)
     CORE_PIN17_CONFIG |= PORT_PCR_MUX(3);
 
-    // Start the clocks again
+    // Start the FTM0 and FTM1 clocks again, but masks the ADC clock
     SIM_SCGC6 |= SIM_SCGC6_FTM0 | SIM_SCGC6_FTM1; 
     FTM1_OUTMASK = 0x02;
     FTM1_CNT = 0;
