@@ -5,7 +5,8 @@ An ADC is used to digitize the data coming out of the array.
 
 ### Documentation
 - [ILX526A documentation with timing requirements](http://www.eureca.de/datasheets/01.xx.xxxx/01.01.xxxx/01.01.0021/ILX526A.pdf) 
-- [Datasheet for the Cortex M4 processor that equips the Teensy 3.2 (MK20DX256VLH7)](https://www.pjrc.com/teensy/K20P64M72SF1RM.pdf). 
+- [Manual for the Cortex M4 processor that equips the Teensy 3.2 (MK20DX256VLH7)](https://www.pjrc.com/teensy/K20P64M72SF1RM.pdf). 
+- [Datasheet for the Cortex M4 processor that equips the Teensy 3.2 (MK20DX256VLH7)](https://www.pjrc.com/teensy/K20P64M72SF1.pdf). 
 
 ### Cycle
 The CCD is grabbing data continuously. The CCD data is digitized after the read-out gate (ROG) goes high. This marks the start of the cycle. 
