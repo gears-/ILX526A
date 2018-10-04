@@ -127,25 +127,40 @@ class ApplicationWindow(QtWidgets.QMainWindow):
     def calibrate(self):
         QtWidgets.QMessageBox.about(self,"New calibration","""Calibrate the spectrometer""")
 
-
-    def setupCCDControl(self):
-        ### Input port
-        inputLabel = QtWidgets.QLabel(self)
-        inputLabel.setText("Input port:")
-        inputACM = QtWidgets.QComboBox()
-        inputACM.setEditable(False)
-
-        # Create a USB Communicator
-        self.USBCommunicator = USBCommunicator()
+    def updatePortList(self):
+        self.USBCommunicator.refreshPortList()
         pl = self.USBCommunicator.portList
         nelem = len(pl)
         
         if( len(pl) != 0):
             for idx in range(0,nelem):
-                inputACM.addItem(pl[idx])
+                self.inputACM.addItem(pl[idx])
+        else:
+            self.inputACM.clear()
+            errorMessage = "No suitable ports found!" + "\n"
+            errorMessage += "Make sure the device is connected."
+            self.showErrorMessage(errorMessage)
+
+    def setupCCDControl(self):
+        ### Input port
+        inputLabel = QtWidgets.QLabel(self)
+        inputLabel.setText("Input port:")
+        self.inputACM = QtWidgets.QComboBox()
+        self.inputACM.setEditable(False)
+
+        # Create a USB Communicator
+        self.USBCommunicator = USBCommunicator()
+
+        # Create a button that can be used to re-scan for ports
+        scanPortButton = QtWidgets.QPushButton("Scan")
+        scanPortButton.setToolTip("Rescan for ports")
+        scanPortButton.clicked.connect(self.updatePortList)
 
         self.inputToolBar.addWidget(inputLabel)
-        self.inputToolBar.addWidget(inputACM)
+        self.inputToolBar.addWidget(self.inputACM)
+        self.inputToolBar.addWidget(scanPortButton)
+
+
 
         ### Exposure time
         exposureLabel = QtWidgets.QLabel(self)
@@ -180,6 +195,24 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         stopButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("media-playback-stop"),'Stop acquisition',self)
         recButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("media-record"),'Record data',self)
 
+        playButton.triggered.connect(self.startAcquisition)
+
         self.acquireToolBar.addAction(playButton)
         self.acquireToolBar.addAction(stopButton)
         self.acquireToolBar.addAction(recButton)
+
+    def startAcquisition(self):
+        ### Port tests
+        # Check that the port initially chosen is available and not already open
+        pl = self.USBCommunicator.portList
+        nelem = len(pl) 
+
+    def showErrorMessage(self,errorString):
+        mb = QtWidgets.QMessageBox()
+        mb.setIcon(QtWidgets.QMessageBox.Critical)
+        mb.setWindowTitle("Error")
+        mb.setText(errorString)
+        mb.exec_()
+
+
+
