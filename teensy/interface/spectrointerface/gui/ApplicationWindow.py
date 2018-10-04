@@ -20,9 +20,10 @@
 # 
 # Source: https:/github.com/pytaunay/ILX526A
 
-from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5 import QtCore, QtWidgets, QtGui 
 
-from .SpectroGraph import SpectroGraph
+from spectrointerface.comm.USBCommunicator import USBCommunicator
+from spectrointerface.gui.SpectroGraph import SpectroGraph
 
 class ApplicationWindow(QtWidgets.QMainWindow):
     def __init__(self):
@@ -36,7 +37,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # Geometry
         self.left = 200
         self.top = 200
-        self.width = 800
+        self.width = 1024 
         self.height = 600
 
         self.initUI()
@@ -63,13 +64,16 @@ class ApplicationWindow(QtWidgets.QMainWindow):
     ### Menus
     def setupMenu(self):
         self.mainMenu = self.menuBar()
-        self.mainToolBar = self.addToolBar("Toolbar")
+        self.mainToolBar = self.addToolBar("Main actions")
+        self.inputToolBar = self.addToolBar("USB Control")
         self.ccdToolBar = self.addToolBar("CCD Control")
+        self.acquireToolBar = self.addToolBar("Acquisition Control")
 
         self.setupFileMenu()
         self.setupCalibrateMenu()
         self.setupAboutMenu()
         self.setupCCDControl()
+        self.setupAcquisition()
 
     def setupFileMenu(self):
         fileMenu = self.mainMenu.addMenu('File') 
@@ -125,13 +129,57 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
 
     def setupCCDControl(self):
+        ### Input port
+        inputLabel = QtWidgets.QLabel(self)
+        inputLabel.setText("Input port:")
         inputACM = QtWidgets.QComboBox()
-#        menu = QtWidgets.QMenu()
-#        menu.addAction("Red")
-#        menu.addAction("Green")
-#        colorButton.setMenu(menu)
+        inputACM.setEditable(False)
 
-        self.ccdToolBar.addWidget(inputACM)
+        # Create a USB Communicator
+        self.USBCommunicator = USBCommunicator()
+        pl = self.USBCommunicator.portList
+        nelem = len(pl)
+        
+        if( len(pl) != 0):
+            for idx in range(0,nelem):
+                inputACM.addItem(pl[idx])
 
-#        menu.triggered.connect(lambda action: print(action.text()))
+        self.inputToolBar.addWidget(inputLabel)
+        self.inputToolBar.addWidget(inputACM)
 
+        ### Exposure time
+        exposureLabel = QtWidgets.QLabel(self)
+        exposureLabel.setText("Exposure time (ms):")
+
+        exposureValidator = QtGui.QIntValidator(5,1500)
+        exposureValue = QtWidgets.QLineEdit(self)
+        exposureValue.setValidator(exposureValidator)
+        exposureValue.setText("5") # Default val.
+        exposureValue.setFixedWidth(60)
+        exposureValue.setAlignment(QtCore.Qt.AlignHCenter)
+
+        self.ccdToolBar.addWidget(exposureLabel)
+        self.ccdToolBar.addWidget(exposureValue)
+
+        ### Number of averages
+        averageLabel = QtWidgets.QLabel(self)
+        averageLabel.setText("Number of averages")
+
+        averageValidator = QtGui.QIntValidator(1,10)
+        averageValue = QtWidgets.QLineEdit(self)
+        averageValue.setValidator(averageValidator)
+        averageValue.setText("1") # Default val.
+        averageValue.setFixedWidth(60)
+        averageValue.setAlignment(QtCore.Qt.AlignHCenter)
+
+        self.ccdToolBar.addWidget(averageLabel)
+        self.ccdToolBar.addWidget(averageValue)
+
+    def setupAcquisition(self):
+        playButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("media-playback-start"),'Start acquisition',self)
+        stopButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("media-playback-stop"),'Stop acquisition',self)
+        recButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("media-record"),'Record data',self)
+
+        self.acquireToolBar.addAction(playButton)
+        self.acquireToolBar.addAction(stopButton)
+        self.acquireToolBar.addAction(recButton)
