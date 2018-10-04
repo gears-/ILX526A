@@ -4,3 +4,5 @@
 *.a
 *.elf
 *.hex
+
+__pycache__
