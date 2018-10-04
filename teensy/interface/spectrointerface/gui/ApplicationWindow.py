@@ -63,9 +63,13 @@ class ApplicationWindow(QtWidgets.QMainWindow):
     ### Menus
     def setupMenu(self):
         self.mainMenu = self.menuBar()
+        self.mainToolBar = self.addToolBar("Toolbar")
+        self.ccdToolBar = self.addToolBar("CCD Control")
+
         self.setupFileMenu()
         self.setupCalibrateMenu()
         self.setupAboutMenu()
+        self.setupCCDControl()
 
     def setupFileMenu(self):
         fileMenu = self.mainMenu.addMenu('File') 
@@ -76,10 +80,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         settingsSaveButton.triggered.connect(self.close) # TODO: IMplement settings save scheme
         fileMenu.addAction(settingsSaveButton)
 
-        # Link the defined short
-        settingsSaveButtonShortcut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+S"),self)
-        settingsSaveButtonShortcut.activated.connect(self.close) 
-
         ### Exit button
         exitButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("application-exit"),'Exit',self)
         exitButton.setShortcut('Ctrl+Q')
@@ -87,10 +87,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         exitButton.triggered.connect(self.close)
         fileMenu.addAction(exitButton)
 
-        # Link the defined short
-        exitButtonShortcut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+Q"),self)
-        exitButtonShortcut.activated.connect(self.close)
-
+        ### Toolbar
+        self.mainToolBar.addAction(exitButton)
+        self.mainToolBar.addAction(settingsSaveButton)
 
     def setupAboutMenu(self):
         self.mainMenu.addSeparator()
@@ -110,19 +109,29 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         newCalibrationButton.triggered.connect(self.calibrate)
         calibrateMenu.addAction(newCalibrationButton)
 
-        newCalibrationButtonShortcut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+N"),self)
-        newCalibrationButtonShortcut.activated.connect(self.calibrate) 
-
         ### Load calibration table button
-        loadCalibrationButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-new"),'New calibration',self)
-        loadCalibrationButton.setShortcut('Ctrl+N')
-        loadCalibrationButton.setStatusTip('Create a new calibration table')
+        loadCalibrationButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-open"),'Load calibration table',self)
+        loadCalibrationButton.setShortcut('Ctrl+L')
+        loadCalibrationButton.setStatusTip('Load an existing calibration table')
         loadCalibrationButton.triggered.connect(self.calibrate)
         calibrateMenu.addAction(loadCalibrationButton)
 
-        loadCalibrationButtonShortcut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+L"),self)
-        loadCalibrationButtonShortcut.activated.connect(self.calibrate) 
+        ### Toolbar
+        self.mainToolBar.addAction(newCalibrationButton)
+        self.mainToolBar.addAction(loadCalibrationButton)
 
     def calibrate(self):
         QtWidgets.QMessageBox.about(self,"New calibration","""Calibrate the spectrometer""")
+
+
+    def setupCCDControl(self):
+        inputACM = QtWidgets.QComboBox()
+#        menu = QtWidgets.QMenu()
+#        menu.addAction("Red")
+#        menu.addAction("Green")
+#        colorButton.setMenu(menu)
+
+        self.ccdToolBar.addWidget(inputACM)
+
+#        menu.triggered.connect(lambda action: print(action.text()))
 
