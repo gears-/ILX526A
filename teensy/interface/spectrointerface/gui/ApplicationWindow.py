@@ -160,8 +160,6 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.inputToolBar.addWidget(self.inputACM)
         self.inputToolBar.addWidget(scanPortButton)
 
-
-
         ### Exposure time
         exposureLabel = QtWidgets.QLabel(self)
         exposureLabel.setText("Exposure time (ms):")
@@ -204,8 +202,20 @@ class ApplicationWindow(QtWidgets.QMainWindow):
     def startAcquisition(self):
         ### Port tests
         # Check that the port initially chosen is available and not already open
-        pl = self.USBCommunicator.portList
-        nelem = len(pl) 
+        port = self.inputACM.currentText()
+        # Attempt to open the port
+        # Raise error and show error message if it fails to do so
+        try:
+            self.USBCommunicator.openPort(port)
+        except Exception as error:
+            self.showErrorMessage(str(error))
+
+    def stopAcquisition(self):
+        try:
+            self.USBCommunicator.closePort()
+        except Exception as error:
+            self.showErrorMessage(str(error))
+
 
     def showErrorMessage(self,errorString):
         mb = QtWidgets.QMessageBox()

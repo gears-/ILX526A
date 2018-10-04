@@ -23,6 +23,8 @@
 import serial
 import glob
 
+from PyQt5 import QtWidgets
+
 class USBCommunicator():
     def __init__(self):
         # Find all possible serial ports 
@@ -40,4 +42,25 @@ class USBCommunicator():
                 pass
 
         self.portList = res
+
+    def openPort(self,port):
+        # Attempt to open the port
+        # Raise error if it fails to do so
+        # The device name is stored in "ser"
+        try:
+            self.ser = serial.Serial(port)
+            self.ser.flushInput()
+            self.isPortOpen = True
+        except Exception as error: 
+            self.isPortOpen = False
+            raise RuntimeError(str(error)) from error
+
+
+    def closePort(self):
+        try:
+            self.ser.close()
+            self.isPortOpen = False
+        except Exception as error: 
+            raise RuntimeError(str(error)) from error
+
 
