@@ -26,9 +26,9 @@ import glob
 class USBCommunicator():
     def __init__(self):
         # Find all possible serial ports 
-        self.listACM()
+        self.refreshPortList()
 
-    def listACM(self):
+    def refreshPortList(self):
         ports = glob.glob('/dev/ttyACM[0-9]*')
         res = []
         for port in ports:
@@ -40,3 +40,4 @@ class USBCommunicator():
                 pass
 
         self.portList = res
+
