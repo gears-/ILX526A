@@ -1,31 +1,19 @@
-# embedding_in_qt5.py --- Simple Qt5 application embedding matplotlib canvases
-#
-# Copyright (C) 2005 Florent Rougon
-#               2006 Darren Dale
-#               2015 Jens H Nielsen
-#
-# This file is an example program for matplotlib. It may be used and
-# modified with no restriction; raw copies as well as modified versions
-# may be distributed without limitation.
+#!/usr/bin/python3
 
-from __future__ import unicode_literals
 import sys
-import os
-import random
-import matplotlib
-# Make sure that we are using QT5
-matplotlib.use('Qt5Agg')
-from PyQt5 import QtCore, QtWidgets
 
-from numpy import arange, sin, pi
+# Matplotlib
+import matplotlib
+matplotlib.use('Qt5Agg') # Make sure that we are using QT5
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
-progname = os.path.basename(sys.argv[0])
-progversion = "0.1"
+# PyQt
+from PyQt5 import QtCore, QtWidgets, QtGui
 
+import numpy as np
 
-class MyMplCanvas(FigureCanvas):
+class MplCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
     def __init__(self, parent=None, width=5, height=4, dpi=100):
@@ -45,92 +33,128 @@ class MyMplCanvas(FigureCanvas):
     def compute_initial_figure(self):
         pass
 
-
-class MyStaticMplCanvas(MyMplCanvas):
-    """Simple canvas with a sine plot."""
-
-    def compute_initial_figure(self):
-        t = arange(0.0, 3.0, 0.01)
-        s = sin(2*pi*t)
-        self.axes.plot(t, s)
-
-
-class MyDynamicMplCanvas(MyMplCanvas):
-    """A canvas that updates itself every second with a new plot."""
+class SpectroGraph(MplCanvas):
+    """A canvas that updates itself with a new plot."""
 
     def __init__(self, *args, **kwargs):
-        MyMplCanvas.__init__(self, *args, **kwargs)
-        timer = QtCore.QTimer(self)
-        timer.timeout.connect(self.update_figure)
-        timer.start(1000)
+        MplCanvas.__init__(self, *args, **kwargs)
+        #timer = QtCore.QTimer(self)
+        #timer.timeout.connect(self.update_figure)
+        #timer.start(1000)
 
     def compute_initial_figure(self):
-        self.axes.plot([0, 1, 2, 3], [1, 2, 0, 4], 'r')
-
+        pass
+        
     def update_figure(self):
-        # Build a list of 4 random integers between 0 and 10 (both inclusive)
-        l = [random.randint(0, 10) for i in range(4)]
-        self.axes.cla()
-        self.axes.plot([0, 1, 2, 3], l, 'r')
-        self.draw()
-
+        pass
+       
 
 class ApplicationWindow(QtWidgets.QMainWindow):
     def __init__(self):
+        # Call parent function
         QtWidgets.QMainWindow.__init__(self)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        self.setWindowTitle("application main window")
 
-        self.file_menu = QtWidgets.QMenu('&File', self)
-        self.file_menu.addAction('&Quit', self.fileQuit,
-                                 QtCore.Qt.CTRL + QtCore.Qt.Key_Q)
-        self.menuBar().addMenu(self.file_menu)
+        # Title
+        self.title = "Spectrometer Interface 0.1"
 
-        self.help_menu = QtWidgets.QMenu('&Help', self)
-        self.menuBar().addSeparator()
-        self.menuBar().addMenu(self.help_menu)
+        # Geometry
+        self.left = 200
+        self.top = 200
+        self.width = 800
+        self.height = 600
 
-        self.help_menu.addAction('&About', self.about)
+        self.initUI()
 
+    def initUI(self):
+        self.setWindowTitle(self.title)
+        self.setGeometry(self.left,self.top,self.width,self.height)
+
+        self.setupMenu()
+        self.setupMainCanvas()
+
+    def setupMainCanvas(self):
+        ### Main widget
         self.main_widget = QtWidgets.QWidget(self)
 
+        ### Matplotlib canvas
         l = QtWidgets.QVBoxLayout(self.main_widget)
-        sc = MyStaticMplCanvas(self.main_widget, width=5, height=4, dpi=100)
-        dc = MyDynamicMplCanvas(self.main_widget, width=5, height=4, dpi=100)
-        l.addWidget(sc)
+        dc = SpectroGraph(self.main_widget, width=5, height=4, dpi=100)
         l.addWidget(dc)
 
         self.main_widget.setFocus()
         self.setCentralWidget(self.main_widget)
 
-        self.statusBar().showMessage("All hail matplotlib!", 2000)
+    ### Menus
+    def setupMenu(self):
+        self.mainMenu = self.menuBar()
+        self.setupFileMenu()
+        self.setupCalibrateMenu()
+        self.setupAboutMenu()
 
-    def fileQuit(self):
-        self.close()
+    def setupFileMenu(self):
+        fileMenu = self.mainMenu.addMenu('File') 
+        ### Save settings
+        settingsSaveButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-save"),'Save settings',self)
+        settingsSaveButton.setShortcut('Ctrl+S')
+        settingsSaveButton.setStatusTip('Save settings')
+        settingsSaveButton.triggered.connect(self.close) # TODO: IMplement settings save scheme
+        fileMenu.addAction(settingsSaveButton)
 
-    def closeEvent(self, ce):
-        self.fileQuit()
+        # Link the defined short
+        settingsSaveButtonShortcut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+S"),self)
+        settingsSaveButtonShortcut.activated.connect(self.close) 
+
+        ### Exit button
+        exitButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("application-exit"),'Exit',self)
+        exitButton.setShortcut('Ctrl+Q')
+        exitButton.setStatusTip('Exit application')
+        exitButton.triggered.connect(self.close)
+        fileMenu.addAction(exitButton)
+
+        # Link the defined short
+        exitButtonShortcut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+Q"),self)
+        exitButtonShortcut.activated.connect(self.close)
+
+
+    def setupAboutMenu(self):
+        self.mainMenu.addSeparator()
+        aboutMenu = self.mainMenu.addMenu('Help')
+        aboutMenu.addAction('&About',self.about)
 
     def about(self):
-        QtWidgets.QMessageBox.about(self, "About",
-                                    """embedding_in_qt5.py example
-Copyright 2005 Florent Rougon, 2006 Darren Dale, 2015 Jens H Nielsen
+        QtWidgets.QMessageBox.about(self, "About", """Interface with a spectrometer head that uses an ILX526A CCD array""")
 
-This program is a simple example of a Qt5 application embedding matplotlib
-canvases.
+    def setupCalibrateMenu(self):
+        calibrateMenu = self.mainMenu.addMenu('Calibrate')
+        
+        ### New calibration button
+        newCalibrationButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-new"),'New calibration',self)
+        newCalibrationButton.setShortcut('Ctrl+N')
+        newCalibrationButton.setStatusTip('Create a new calibration table')
+        newCalibrationButton.triggered.connect(self.calibrate)
+        calibrateMenu.addAction(newCalibrationButton)
 
-It may be used and modified with no restriction; raw copies as well as
-modified versions may be distributed without limitation.
+        newCalibrationButtonShortcut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+N"),self)
+        newCalibrationButtonShortcut.activated.connect(self.calibrate) 
 
-This is modified from the embedding in qt4 example to show the difference
-between qt4 and qt5"""
-                                )
+        ### Load calibration table button
+        loadCalibrationButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-new"),'New calibration',self)
+        loadCalibrationButton.setShortcut('Ctrl+N')
+        loadCalibrationButton.setStatusTip('Create a new calibration table')
+        loadCalibrationButton.triggered.connect(self.calibrate)
+        calibrateMenu.addAction(loadCalibrationButton)
+
+        loadCalibrationButtonShortcut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+L"),self)
+        loadCalibrationButtonShortcut.activated.connect(self.calibrate) 
+
+    def calibrate(self):
+        QtWidgets.QMessageBox.about(self,"New calibration","""Calibrate the spectrometer""")
 
 
-qApp = QtWidgets.QApplication(sys.argv)
+if __name__ == '__main__':
+    qApp = QtWidgets.QApplication(sys.argv)
 
-aw = ApplicationWindow()
-aw.setWindowTitle("%s" % progname)
-aw.show()
-sys.exit(qApp.exec_())
-#qApp.exec_()
+    aw = ApplicationWindow()
+    aw.show()
+    sys.exit(qApp.exec_())
