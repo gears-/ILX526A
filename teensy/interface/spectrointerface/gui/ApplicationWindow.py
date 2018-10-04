@@ -55,7 +55,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         ### Matplotlib canvas
         l = QtWidgets.QVBoxLayout(self.main_widget)
-        dc = SpectroGraph(self.main_widget, width=5, height=4, dpi=100)
+        dc = SpectroGraph(self.main_widget, 
+                width=5, height=4, dpi=100,
+                comm = self.USBCommunicator)
         l.addWidget(dc)
 
         self.main_widget.setFocus()
@@ -207,6 +209,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # Raise error and show error message if it fails to do so
         try:
             self.USBCommunicator.openPort(port)
+            self.USBCommunicator.read()
         except Exception as error:
             self.showErrorMessage(str(error))
 

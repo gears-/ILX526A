@@ -22,13 +22,17 @@
 
 import serial
 import glob
+import threading
 
 from PyQt5 import QtWidgets
+
+from spectrointerface.comm.dataReader import DataReader
 
 class USBCommunicator():
     def __init__(self):
         # Find all possible serial ports 
         self.refreshPortList()
+        self.dataReader = DataReader()
 
     def refreshPortList(self):
         ports = glob.glob('/dev/ttyACM[0-9]*')
@@ -55,7 +59,6 @@ class USBCommunicator():
             self.isPortOpen = False
             raise RuntimeError(str(error)) from error
 
-
     def closePort(self):
         try:
             self.ser.close()
@@ -63,4 +66,23 @@ class USBCommunicator():
         except Exception as error: 
             raise RuntimeError(str(error)) from error
 
+    def read(self):
+        try:
+            # Start the datareader acquisition
+            self.readThread = threading.Thread(target=self.dataReader.continuousRead)
+            self.readThread.start()
+        except Exception as error: 
+            raise RuntimeError(str(error)) from error
 
+    def stopRead(self):
+        try:
+            # Stop the datareader
+            self.dataReader.continueFlag = False
+
+            # Wait for the thread to wrap up
+            self.readThread.join()
+
+            # Close the port
+            self.closePort()
+        except Exception as error:
+            raise RuntimeError(str(error)) from error

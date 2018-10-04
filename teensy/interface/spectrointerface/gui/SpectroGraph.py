@@ -20,7 +20,9 @@
 # 
 # Source: https:/github.com/pytaunay/ILX526A
 
-from .MplCanvas import MplCanvas
+from spectrointerface.gui.MplCanvas import MplCanvas
+
+import matplotlib.pyplot as plt
 
 class SpectroGraph(MplCanvas):
     """A canvas that updates itself with a new plot."""
@@ -31,9 +33,17 @@ class SpectroGraph(MplCanvas):
         #timer.timeout.connect(self.update_figure)
         #timer.start(1000)
 
-    def compute_initial_figure(self):
-        pass
+    # Compute the initial figure from data stored in the communicator
+    def computeInitialFigure(self,comm):
+        data = comm.dataReader.data_pix
+        self.li, = self.axes.plot(data,'.') 
+        self.axes.relim()
+        self.axes.autoscale_view(True,True,True)
+        self.axes.set_ylim([0,1])
         
-    def update_figure(self):
-        pass
+    def updateFigure(self):
+        data = comm.dataReader.data_pix
+        self.li.set_ydata(data)
+        self.draw()
+
 
