@@ -19,4 +19,3 @@
 # Contact info: https:/github.com/pytaunay
 # 
 # Source: https:/github.com/pytaunay/ILX526A
-

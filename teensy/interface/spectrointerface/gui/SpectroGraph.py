@@ -20,8 +20,7 @@
 # 
 # Source: https:/github.com/pytaunay/ILX526A
 
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
+from .MplCanvas import MplCanvas
 
 class SpectroGraph(MplCanvas):
     """A canvas that updates itself with a new plot."""

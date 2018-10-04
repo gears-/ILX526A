@@ -22,6 +22,8 @@
 
 from PyQt5 import QtCore, QtWidgets, QtGui
 
+from .SpectroGraph import SpectroGraph
+
 class ApplicationWindow(QtWidgets.QMainWindow):
     def __init__(self):
         # Call parent function
