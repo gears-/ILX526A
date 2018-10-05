@@ -29,6 +29,8 @@ from spectrointerface.gui.ApplicationWindow import ApplicationWindow
 from spectrointerface.comm.USBCommunicator import USBCommunicator
 from spectrointerface.process.ActionMap import ActionMap
 
+from spectrointerface.comm.dataReader import DataReader
+
 class App(QtWidgets.QApplication):
     """ 
     The master application that contains the application window and the corresponding user interface, and the actions that the UI triggers
@@ -50,9 +52,6 @@ class App(QtWidgets.QApplication):
         # Link UI to actions
         self.__actionMap = ActionMap(self)
 
-        # Update the port list
-        self.updatePortList()
-        
     def getUSBCommunicator(self):
         return self.__USBCommunicator
 
@@ -70,19 +69,23 @@ class App(QtWidgets.QApplication):
         QtWidgets.QMessageBox.about(self.__apw,"New calibration","""Calibrate the spectrometer""")
 
     def updatePortList(self):
+        # Get the ACM combo box
+        inputACM = self.__apw.getToolbar("USB")._inputACM 
+
         # Clear the display
-        self.inputACM.clear()
+        inputACM.clear()
+
         # Refresh the port list on the communicator
-        self.USBCommunicator.refreshPortList()
-        pl = self.USBCommunicator.portList
+        self.__USBCommunicator.refreshPortList()
+        pl = self.__USBCommunicator.portList
         nelem = len(pl)
         
         # Are there any items? If yes, list them all
         if( len(pl) != 0):
             for idx in range(0,nelem):
-                self.inputACM.addItem(pl[idx])
+                inputACM.addItem(pl[idx])
         else:
-            self.inputACM.clear()
+            inputACM.clear()
             errorMessage = "No suitable ports found!" + "\n"
             errorMessage += "Make sure the device is connected."
             self.showErrorMessage(errorMessage)
@@ -90,15 +93,19 @@ class App(QtWidgets.QApplication):
 
     def startAcquisition(self):
         ### Port tests
+        # Get the ACM combo box
+        inputACM = self.__apw.getToolbar("USB")._inputACM 
+
         # Check that the port initially chosen is available and not already open
-        port = self.inputACM.currentText()
+        port = inputACM.currentText()
+
         # Attempt to open the port
         # Raise error and show error message if it fails to do so
         self.__threads = []
         self.__dataAcquisitionDone = 0
         try:
             # Open the port
-            self.USBCommunicator.openPort(port)
+            self.__USBCommunicator.openPort(port)
 
             # Setup a thread
             dataReader = DataReader()
@@ -114,7 +121,7 @@ class App(QtWidgets.QApplication):
             dataReader.dataDisplay.connect(self.onDataReady)
 
             # Start thread
-            readFunc = lambda : dataReader.readUntil(self.USBCommunicator.ser,100)
+            readFunc = lambda : dataReader.readUntil(self.__USBCommunicator.ser,100)
             thread.started.connect(readFunc)
             thread.start()
 
@@ -128,7 +135,7 @@ class App(QtWidgets.QApplication):
             for thread, worker in self.__threads:
                 thread.quit()
                 thread.wait()
-            self.USBCommunicator.closePort()
+            self.__USBCommunicator.closePort()
 
         except Exception as error:
             self.showErrorMessage(str(error))

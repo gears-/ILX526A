@@ -55,15 +55,15 @@ class USBToolbar(Toolbar):
         inputLabel.setText("Input port:")
 
         # Combobox
-        self.inputACM = QtWidgets.QComboBox()
-        self.inputACM.setEditable(False)
+        self._inputACM = QtWidgets.QComboBox()
+        self._inputACM.setEditable(False)
 
         # Create a button that can be used to re-scan for ports
         scanPortButton = QtWidgets.QPushButton("Scan")
         scanPortButton.setToolTip("Rescan for ports")
 
         self._toolbar.addWidget(inputLabel)
-        self._toolbar.addWidget(self.inputACM)
+        self._toolbar.addWidget(self._inputACM)
         self._toolbar.addWidget(scanPortButton)
 
         self._buttonList["scanPort"] = scanPortButton
