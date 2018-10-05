@@ -88,6 +88,34 @@ class App(QtWidgets.QApplication):
             errorMessage += "Make sure the device is connected."
             self.showErrorMessage(errorMessage)
 
+    def changeExposure(self):
+        ### Change exposure if the usb communication channel is open
+        text = self.__apw.toolbarList["CCD"].actionList["exposureChange"].text()
+        
+        # When we type stuff in we can remove the whole string or put spaces
+        if text != "" and text != " ":
+            textInt = int(text)
+
+            if self.__USBCommunicator.isPortOpen:
+                cmd = "e"
+                if textInt > 1000:
+                    cmd += "s"
+                    cmd += str(textInt / 1000)
+                else:
+                    cmd += "m"
+                    cmd += str(textInt)
+
+                cmd += "\n"
+                self.__USBCommunicator.sendCommand(cmd.encode())
+
+            else:
+                print("Port not open")
+            
+
+
+       
+
+
 
     def startAcquisition(self):
         ### Port tests

@@ -36,12 +36,13 @@ class USBCommunicator():
     Attributes:
         portList    the list of ttyACM ports available
         ser         the serial object obtained when opening a port
-        isPortOpen  a boolean to indicate if we opened a port
+        __isPortOpen  a boolean to indicate if we opened a port
     """
 
     def __init__(self):
         # Find all possible serial ports 
         self.refreshPortList()
+        self.__isPortOpen = False
 
     def refreshPortList(self):
         ports = glob.glob('/dev/ttyACM[0-9]*')
@@ -63,17 +64,27 @@ class USBCommunicator():
         try:
             self.ser = serial.Serial(port)
             self.ser.flushInput()
-            self.isPortOpen = True
+            self.__isPortOpen = True
         except Exception as error: 
-            self.isPortOpen = False
+            self.__isPortOpen = False
             raise RuntimeError(str(error)) from error
 
     def closePort(self):
         try:
             self.ser.close()
-            self.isPortOpen = False
+            self.__isPortOpen = False
         except Exception as error: 
             raise RuntimeError(str(error)) from error
+
+    def sendCommand(self,cmd):
+        try:
+            self.ser.write(cmd)
+        except Exception as error: 
+            raise RuntimeError(str(error)) from error
+
+    @property
+    def isPortOpen(self):
+        return self.__isPortOpen
 
 #    def read(self):
 #        try:

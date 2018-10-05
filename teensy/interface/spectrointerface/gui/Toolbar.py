@@ -31,11 +31,11 @@ class Toolbar():
     def __init__(self,apw):
         self._apw = apw
         self._toolbar = apw.addToolBar(self._toolbarName)
-        self._buttonList = {}
+        self._actionList= {}
 
     @property
-    def buttonList(self):
-        return self._buttonList
+    def actionList(self):
+        return self._actionList
 
 #        self.__ccdToolBar = apw.addToolBar("CCD Control")
 #        self.__acquireToolBar = apw.addToolBar("Acquisition Control")
@@ -67,7 +67,7 @@ class USBToolbar(Toolbar):
         self._toolbar.addWidget(self._inputACM)
         self._toolbar.addWidget(scanPortButton)
 
-        self._buttonList["scanPort"] = scanPortButton
+        self._actionList["scanPort"] = scanPortButton
 #        scanPortButton.clicked.connect(apw.updatePortList)
 
 class CCDControlToolbar(Toolbar):
@@ -90,6 +90,7 @@ class CCDControlToolbar(Toolbar):
         self._toolbar.addWidget(exposureLabel)
         self._toolbar.addWidget(exposureValue)
 
+
         ### Number of averages
         averageLabel = QtWidgets.QLabel(apw)
         averageLabel.setText("Number of averages")
@@ -104,6 +105,8 @@ class CCDControlToolbar(Toolbar):
         self._toolbar.addWidget(averageLabel)
         self._toolbar.addWidget(averageValue)
 
+        self._actionList["exposureChange"] = exposureValue 
+        self._actionList["averageChange"] = averageValue 
 
 class AcquisitionToolbar(Toolbar):
     _toolbarName = "Acquisition"
@@ -120,8 +123,8 @@ class AcquisitionToolbar(Toolbar):
         self._toolbar.addAction(stopButton)
         self._toolbar.addAction(recButton)
 
-        self._buttonList["play"] = playButton
-        self._buttonList["stop"] = stopButton
-        self._buttonList["rec"] = recButton
+        self._actionList["play"] = playButton
+        self._actionList["stop"] = stopButton
+        self._actionList["rec"] = recButton
 
 #        stopButton.triggered.connect(self.stopAcquisition)

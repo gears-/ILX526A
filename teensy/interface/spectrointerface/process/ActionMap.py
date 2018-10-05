@@ -49,13 +49,15 @@ class ActionMap():
         # List and link all toolbar buttons
         toolbarList = apw.toolbarList
         for tb in toolbarList:
-            bList = toolbarList[tb].buttonList
+            aList = toolbarList[tb].actionList
 
-            for button in bList:
-                if button == "scanPort":
-                    bList[button].clicked.connect(qApp.updatePortList)
-                elif button == "play":
-                    bList[button].triggered.connect(qApp.startAcquisition)
-                elif button == "stop":
-                    bList[button].triggered.connect(qApp.stopAcquisition)
+            for action in aList:
+                if action == "scanPort":
+                    aList[action].clicked.connect(qApp.updatePortList)
+                elif action == "play":
+                    aList[action].triggered.connect(qApp.startAcquisition)
+                elif action == "stop":
+                    aList[action].triggered.connect(qApp.stopAcquisition)
+                elif action == "exposureChange":
+                    aList[action].textChanged.connect(qApp.changeExposure)
 
