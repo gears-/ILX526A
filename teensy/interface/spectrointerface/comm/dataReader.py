@@ -23,7 +23,9 @@
 import numpy as np
 import sys
 
-class DataReader():
+from PyQt5 import QtCore
+
+class DataReader(QtCore.QObject):
     # Constants
     SOT = "7eae261ddde24eeda293a7cd17e4379a" 
     NELEM = 3100
@@ -35,13 +37,21 @@ class DataReader():
     ADC_RES = 4095
     ADC_V = 5
 
-    def __init__(self):
+    # Threading
+    dataReady = QtCore.pyqtSignal(bool) # is data available?
+    dataDisplay = QtCore.pyqtSignal(np.ndarray) # actual data to display
+
+    def __init__(self,*args,**kwargs):
+        super().__init__()
+        self.__abort = False
+
         self.start_frame = np.fromstring(self.SOT,dtype=np.uint8)
         # Holders for data
         self.data = np.zeros(self.BUF_SIZE,dtype=np.uint8) # Data for second half of packet
         self.data_p1 = np.zeros(self.BUF_SIZE,dtype=np.uint8) # Data for first half of packet
         self.continueFlag = True
         self.data_pix = np.zeros(self.NPIX,dtype=np.float64)
+        self.partial_array = True
 
 #        self.data16 = data[0:self.NELEM_BYTES].view(dtype=np.uint16) # This is of size 3000 pixels
 #        self.data16_p1 = data_p1[0:self.NELEM_BYTES].view(dtype=np.uint16)
@@ -68,7 +78,7 @@ class DataReader():
         current = np.frombuffer(line,dtype=np.uint8)
 
         # Find the location where the start of transmission occurs
-        bool_indices = np.all(self.rollingWindow(current, 32) == start_frame, axis=1)
+        bool_indices = np.all(self.rollingWindow(current, 32) == self.start_frame, axis=1)
         array_idx = np.mgrid[0:len(bool_indices)][bool_indices]
 
         # TODO: Add check to see if bool_indices is empty or not. Maybe try/catch?
@@ -87,16 +97,18 @@ class DataReader():
             except:
                 np.copyto(data,current[start_idx::])
             
-    def continuousRead(self,nread = sys.maxsize):
+    @QtCore.pyqtSlot()
+    def readUntil(self,ser,nread = 1):
         currentRead = 0
+        print("Continuous read",currentRead,nread,self.continueFlag)
 
         while currentRead < nread and self.continueFlag:
-            self.readBuffer(self.data)
-            self.readBuffer(self.data_p1)
+            self.readBuffer(self.data,ser)
+            self.readBuffer(self.data_p1,ser)
 
 
-            data16 = self.data[0:NELEM_BYTES].view(dtype=np.uint16) # This is of size 3100 pixels
-            data16_p1 = self.data_p1[0:NELEM_BYTES].view(dtype=np.uint16)
+            data16 = self.data[0:self.NELEM_BYTES].view(dtype=np.uint16) # This is of size 3100 pixels
+            data16_p1 = self.data_p1[0:self.NELEM_BYTES].view(dtype=np.uint16)
 
             # Full frame
             # 0-22: dummy signals
@@ -111,25 +123,30 @@ class DataReader():
             # Extract data
             self.data_pix = data_plot[55:3055]
             self.data_black = data_plot[23:53]
-            even_black = data_black[0::2]
+            even_black = self.data_black[0::2]
             even_black = np.average(even_black)
-            odd_black = data_black[0::2]
+            odd_black = self.data_black[0::2]
             odd_black = np.average(odd_black)
 
             # Raw data
             self.data_raw = self.data_pix
     
-            data_pix[0::2] = data_pix[0::2] / odd_black
-            data_pix[1::2] = data_pix[1::2] / even_black
+            self.data_pix[0::2] = self.data_pix[0::2] / odd_black
+            self.data_pix[1::2] = self.data_pix[1::2] / even_black
 
-            data_pix = np.abs(1-data_pix)
+            self.data_pix = np.abs(1-self.data_pix)
 
             data = np.zeros(self.BUF_SIZE,dtype=np.uint8) # Data for second half of packet
             data_p1 = np.zeros(self.BUF_SIZE,dtype=np.uint8) # Data for first half of packet
             currentRead = currentRead + 1
 
-    def readUntil(self,nread):
-        continuousRead(nread)
+            self.dataDisplay.emit(self.data_pix)
+            #self.dataReady.emit(True)
+
+
+    def continuousRead(self,ser):
+        print("Continuous read")
+        self.readUntil(ser,nread=sys.maxsize)
 
 
 

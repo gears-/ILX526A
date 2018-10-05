@@ -22,28 +22,31 @@
 
 from spectrointerface.gui.MplCanvas import MplCanvas
 
+from PyQt5 import QtCore
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 class SpectroGraph(MplCanvas):
     """A canvas that updates itself with a new plot."""
 
-    def __init__(self, *args, **kwargs):
-        MplCanvas.__init__(self, *args, **kwargs)
+    def __init__(self, parent=None, width=5, height=4, dpi=100, comm=None):
+        MplCanvas.__init__(self,parent,width,height,dpi,comm)
         #timer = QtCore.QTimer(self)
-        #timer.timeout.connect(self.update_figure)
+        #timer.timeout.connect(lambda c=comm: self.updateFigure(c))
         #timer.start(1000)
 
-    # Compute the initial figure from data stored in the communicator
-    def computeInitialFigure(self,comm):
-        data = comm.dataReader.data_pix
+    def computeInitialFigure(self):
+        data = np.zeros(3000)
         self.li, = self.axes.plot(data,'.') 
         self.axes.relim()
         self.axes.autoscale_view(True,True,True)
         self.axes.set_ylim([0,1])
+        plt.show()
         
-    def updateFigure(self):
-        data = comm.dataReader.data_pix
+    def updateFigure(self,data):
         self.li.set_ydata(data)
         self.draw()
+        self.flush_events()
 
 

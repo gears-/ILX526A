@@ -23,7 +23,10 @@
 from PyQt5 import QtCore, QtWidgets, QtGui 
 
 from spectrointerface.comm.USBCommunicator import USBCommunicator
+from spectrointerface.comm.dataReader import DataReader
 from spectrointerface.gui.SpectroGraph import SpectroGraph
+
+import numpy as np
 
 class ApplicationWindow(QtWidgets.QMainWindow):
     def __init__(self):
@@ -55,10 +58,10 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         ### Matplotlib canvas
         l = QtWidgets.QVBoxLayout(self.main_widget)
-        dc = SpectroGraph(self.main_widget, 
+        self.dc = SpectroGraph(self.main_widget, 
                 width=5, height=4, dpi=100,
                 comm = self.USBCommunicator)
-        l.addWidget(dc)
+        l.addWidget(self.dc)
 
         self.main_widget.setFocus()
         self.setCentralWidget(self.main_widget)
@@ -212,9 +215,28 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         port = self.inputACM.currentText()
         # Attempt to open the port
         # Raise error and show error message if it fails to do so
+        self.__threads = []
+        self.__dataAcquisitionDone = 0
         try:
+            # Open the port
             self.USBCommunicator.openPort(port)
-            self.USBCommunicator.read()
+
+            # Setup a thread
+            dataReader = DataReader()
+            thread = QtCore.QThread()
+            thread.setObjectName('datareader')
+            self.__threads.append((thread,dataReader))
+            dataReader.moveToThread(thread)
+
+            # Get data from reader
+            #dataReader.dataReady.connect(self.onDataReady)
+            dataReader.dataDisplay.connect(self.onDataReady)
+
+            # Start thread
+            readFunc = lambda : dataReader.readUntil(self.USBCommunicator.ser,100)
+            thread.started.connect(readFunc)
+            thread.start()
+
         except Exception as error:
             self.showErrorMessage(str(error))
 
@@ -224,6 +246,10 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         except Exception as error:
             self.showErrorMessage(str(error))
 
+    #@QtCore.pyqtSlot(bool)
+    @QtCore.pyqtSlot(np.ndarray)
+    def onDataReady(self,data:np.ndarray):
+        self.dc.updateFigure(data)
 
     def showErrorMessage(self,errorString):
         mb = QtWidgets.QMessageBox()

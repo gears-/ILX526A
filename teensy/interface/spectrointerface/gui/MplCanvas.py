@@ -32,7 +32,7 @@ class MplCanvas(FigureCanvas):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
 
-        self.computeInitialFigure(comm)
+        self.computeInitialFigure()
 
         FigureCanvas.__init__(self, fig)
         self.setParent(parent)
@@ -42,6 +42,10 @@ class MplCanvas(FigureCanvas):
                                    QtWidgets.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
 
-    def computeInitialFigure(self,comm):
+    def computeInitialFigure(self):
+        pass
+
+
+    def updateFigure(self,data):
         pass
 

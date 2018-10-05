@@ -24,15 +24,24 @@ import serial
 import glob
 import threading
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets,QtCore
 
 from spectrointerface.comm.dataReader import DataReader
 
+# TODO: Rename this class to something more meaningful. Maybe port management?
 class USBCommunicator():
+    """
+    A class that is used to open / close the USB port
+
+    Attributes:
+        portList    the list of ttyACM ports available
+        ser         the serial object obtained when opening a port
+        isPortOpen  a boolean to indicate if we opened a port
+    """
+
     def __init__(self):
         # Find all possible serial ports 
         self.refreshPortList()
-        self.dataReader = DataReader()
 
     def refreshPortList(self):
         ports = glob.glob('/dev/ttyACM[0-9]*')
@@ -66,25 +75,29 @@ class USBCommunicator():
         except Exception as error: 
             raise RuntimeError(str(error)) from error
 
-    def read(self):
-        try:
-            # Start the datareader acquisition
-            self.dataReader.continuousRead(self.ser)
-#            self.readThread = threading.Thread(target=self.dataReader.continuousRead,
-#                    args=(self.ser))
-#            self.readThread.start()
-        except Exception as error: 
-            raise RuntimeError(str(error)) from error
-
-    def stopRead(self):
-        try:
-            # Stop the datareader
-            self.dataReader.continueFlag = False
-
-            # Wait for the thread to wrap up
-            #self.readThread.join()
-
-            # Close the port
-            self.closePort()
-        except Exception as error:
-            raise RuntimeError(str(error)) from error
+#    def read(self):
+#        try:
+#            self.dataReader = DataReader()
+#            thread = QtCore.QThread()
+#            thread.setObjectName('datareader')
+#            self.__threads.append((thread,self.dataReader))
+#            self.dataReader.moveToThread(thread)
+#
+#            thread.started.connect(self.dataReader.continuousRead)
+#            thread.start()
+#
+#        except Exception as error: 
+#            raise RuntimeError(str(error)) from error
+#
+#    def stopRead(self):
+#        try:
+#            # Stop the datareader
+#            self.dataReader.continueFlag = False
+#
+#            # Wait for the thread to wrap up
+#            #self.readThread.join()
+#
+#            # Close the port
+#            self.closePort()
+#        except Exception as error:
+#            raise RuntimeError(str(error)) from error
