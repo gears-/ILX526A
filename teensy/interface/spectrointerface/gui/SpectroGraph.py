@@ -32,9 +32,6 @@ class SpectroGraph(MplCanvas):
 
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         MplCanvas.__init__(self,parent,width,height,dpi)
-        #timer = QtCore.QTimer(self)
-        #timer.timeout.connect(lambda c=comm: self.updateFigure(c))
-        #timer.start(1000)
 
     def computeInitialFigure(self):
         data = np.zeros(3000)

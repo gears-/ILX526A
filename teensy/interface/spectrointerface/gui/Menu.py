@@ -96,14 +96,6 @@ class FileMenu(Menu):
         self._buttonList["settingsSave"] = settingsSaveButton
         self._buttonList["exit"] = exitButton
 
-#        exitButton.triggered.connect(apw.close)
-#        settingsSaveButton.triggered.connect(apw.close) # TODO: IMplement settings save scheme
-
-        ### Toolbar
-        #self.mainToolBar.addAction(exitButton)
-        #self.mainToolBar.addAction(settingsSaveButton)
-
-
 class HelpMenu(Menu):
     _menuName = "Help"
     def __init__(self,mainMenu,apw):
@@ -126,13 +118,11 @@ class CalibrateMenu(Menu):
         newCalibrationButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-new"),'New calibration',apw)
         newCalibrationButton.setShortcut('Ctrl+N')
         newCalibrationButton.setStatusTip('Create a new calibration table')
-        #newCalibrationButton.triggered.connect(apw.calibrate)
 
         ### Load calibration table button
         loadCalibrationButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-open"),'Load calibration table',apw)
         loadCalibrationButton.setShortcut('Ctrl+L')
         loadCalibrationButton.setStatusTip('Load an existing calibration table')
-#        loadCalibrationButton.triggered.connect(apw.calibrate)
 
         self._menu.addAction(newCalibrationButton)
         self._menu.addAction(loadCalibrationButton)
@@ -140,8 +130,5 @@ class CalibrateMenu(Menu):
         self._buttonList["newCalibration"] = newCalibrationButton
         self._buttonList["loadCalibration"] = loadCalibrationButton
 
-        ### Toolbar
-#        self.mainToolBar.addAction(newCalibrationButton)
-#        self.mainToolBar.addAction(loadCalibrationButton)
 
 

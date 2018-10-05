@@ -28,7 +28,6 @@ from PyQt5 import QtWidgets,QtCore
 
 from spectrointerface.comm.dataReader import DataReader
 
-# TODO: Rename this class to something more meaningful. Maybe port management?
 class USBCommunicator():
     """
     A class that is used to open / close the USB port
@@ -86,29 +85,3 @@ class USBCommunicator():
     def isPortOpen(self):
         return self.__isPortOpen
 
-#    def read(self):
-#        try:
-#            self.dataReader = DataReader()
-#            thread = QtCore.QThread()
-#            thread.setObjectName('datareader')
-#            self.__threads.append((thread,self.dataReader))
-#            self.dataReader.moveToThread(thread)
-#
-#            thread.started.connect(self.dataReader.continuousRead)
-#            thread.start()
-#
-#        except Exception as error: 
-#            raise RuntimeError(str(error)) from error
-#
-#    def stopRead(self):
-#        try:
-#            # Stop the datareader
-#            self.dataReader.continueFlag = False
-#
-#            # Wait for the thread to wrap up
-#            #self.readThread.join()
-#
-#            # Close the port
-#            self.closePort()
-#        except Exception as error:
-#            raise RuntimeError(str(error)) from error

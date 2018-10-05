@@ -37,13 +37,6 @@ class Toolbar():
     def actionList(self):
         return self._actionList
 
-#        self.__ccdToolBar = apw.addToolBar("CCD Control")
-#        self.__acquireToolBar = apw.addToolBar("Acquisition Control")
-
-#        self.setupAcquisition(apw)
-
-
-
 class USBToolbar(Toolbar):
     _toolbarName = "USB Control"
     
@@ -68,7 +61,6 @@ class USBToolbar(Toolbar):
         self._toolbar.addWidget(scanPortButton)
 
         self._actionList["scanPort"] = scanPortButton
-#        scanPortButton.clicked.connect(apw.updatePortList)
 
 class CCDControlToolbar(Toolbar):
     _toolbarName = "CCD Control"
@@ -127,4 +119,3 @@ class AcquisitionToolbar(Toolbar):
         self._actionList["stop"] = stopButton
         self._actionList["rec"] = recButton
 
-#        stopButton.triggered.connect(self.stopAcquisition)

@@ -112,11 +112,6 @@ class App(QtWidgets.QApplication):
                 print("Port not open")
             
 
-
-       
-
-
-
     def startAcquisition(self):
         ### Port tests
         # Get the ACM combo box
@@ -147,7 +142,8 @@ class App(QtWidgets.QApplication):
             dataReader.dataDisplay.connect(self.onDataReady)
 
             # Start thread
-            readFunc = lambda : dataReader.readUntil(self.__USBCommunicator.ser,100)
+            #readFunc = lambda : dataReader.readUntil(self.__USBCommunicator.ser,100)
+            readFunc = lambda : dataReader.continuousRead(self.__USBCommunicator.ser)
             thread.started.connect(readFunc)
             thread.start()
 

@@ -53,12 +53,6 @@ class DataReader(QtCore.QObject):
         self.data_pix = np.zeros(self.NPIX,dtype=np.float64)
         self.partial_array = True
 
-#        self.data16 = data[0:self.NELEM_BYTES].view(dtype=np.uint16) # This is of size 3000 pixels
-#        self.data16_p1 = data_p1[0:self.NELEM_BYTES].view(dtype=np.uint16)
-
-#        self.data_V = np.zeros(self.NELEM,dtype=np.float64) # This is of size 3000 pixels
-#        self.data_plot = np.zeros(len(data16),dtype=np.float64)
-
     # See https://stackoverflow.com/questions/7100242/python-numpy-first-occurrence-of-subarray
     def rollingWindow(self,a, size):
         shape = a.shape[:-1] + (a.shape[-1] - size + 1, size)
@@ -100,7 +94,6 @@ class DataReader(QtCore.QObject):
     @QtCore.pyqtSlot()
     def readUntil(self,ser,nread = 1):
         currentRead = 0
-        print("Continuous read",currentRead,nread,self.continueFlag)
 
         while currentRead < nread and self.continueFlag:
             self.readBuffer(self.data,ser)
@@ -143,7 +136,6 @@ class DataReader(QtCore.QObject):
             self.dataDisplay.emit(self.data_pix)
 
             if self.__abort:
-                print("Stop!")
                 break
 
 
