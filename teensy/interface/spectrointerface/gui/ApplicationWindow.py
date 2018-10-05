@@ -130,10 +130,14 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         QtWidgets.QMessageBox.about(self,"New calibration","""Calibrate the spectrometer""")
 
     def updatePortList(self):
+        # Clear the display
+        self.inputACM.clear()
+        # Refresh the port list on the communicator
         self.USBCommunicator.refreshPortList()
         pl = self.USBCommunicator.portList
         nelem = len(pl)
         
+        # Are there any items? If yes, list them all
         if( len(pl) != 0):
             for idx in range(0,nelem):
                 self.inputACM.addItem(pl[idx])
@@ -196,6 +200,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         recButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("media-record"),'Record data',self)
 
         playButton.triggered.connect(self.startAcquisition)
+        stopButton.triggered.connect(self.stopAcquisition)
 
         self.acquireToolBar.addAction(playButton)
         self.acquireToolBar.addAction(stopButton)
@@ -215,7 +220,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     def stopAcquisition(self):
         try:
-            self.USBCommunicator.closePort()
+            self.USBCommunicator.stopRead()
         except Exception as error:
             self.showErrorMessage(str(error))
 
