@@ -6,3 +6,4 @@
 *.hex
 
 __pycache__
+*.swp
