@@ -87,13 +87,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.__toolbarList.append(AcquisitionToolbar(self))
 
         # Setup the main graph
-        #self.setupMainCanvas()
-
-    def getMainMenu(self):
-        return self.__menu
-
-    def getToolbarList(self):
-        return self.__toolbarList
+        self.setupMainCanvas()
 
     def setupMainCanvas(self):
         ### Main widget
@@ -102,10 +96,15 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         ### Matplotlib canvas
         l = QtWidgets.QVBoxLayout(self.main_widget)
         self.dc = SpectroGraph(self.main_widget, 
-                width=5, height=4, dpi=100,
-                comm = self.USBCommunicator)
+                width=5, height=4, dpi=100)
         l.addWidget(self.dc)
 
         self.main_widget.setFocus()
         self.setCentralWidget(self.main_widget)
+
+    def getMainMenu(self):
+        return self.__menu
+
+    def getToolbarList(self):
+        return self.__toolbarList
 
