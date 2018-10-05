@@ -69,8 +69,10 @@ class USBCommunicator():
     def read(self):
         try:
             # Start the datareader acquisition
-            self.readThread = threading.Thread(target=self.dataReader.continuousRead)
-            self.readThread.start()
+            self.dataReader.continuousRead(self.ser)
+#            self.readThread = threading.Thread(target=self.dataReader.continuousRead,
+#                    args=(self.ser))
+#            self.readThread.start()
         except Exception as error: 
             raise RuntimeError(str(error)) from error
 
@@ -80,7 +82,7 @@ class USBCommunicator():
             self.dataReader.continueFlag = False
 
             # Wait for the thread to wrap up
-            self.readThread.join()
+            #self.readThread.join()
 
             # Close the port
             self.closePort()
