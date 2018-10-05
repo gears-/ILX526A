@@ -141,7 +141,10 @@ class DataReader(QtCore.QObject):
             currentRead = currentRead + 1
 
             self.dataDisplay.emit(self.data_pix)
-            #self.dataReady.emit(True)
+
+            if self.__abort:
+                print("Stop!")
+                break
 
 
     def continuousRead(self,ser):
@@ -149,5 +152,7 @@ class DataReader(QtCore.QObject):
         self.readUntil(ser,nread=sys.maxsize)
 
 
+    def abort(self):
+        self.__abort = True
 
 

@@ -29,6 +29,9 @@ from spectrointerface.gui.SpectroGraph import SpectroGraph
 import numpy as np
 
 class ApplicationWindow(QtWidgets.QMainWindow):
+
+    sigDataStop = QtCore.pyqtSignal()
+
     def __init__(self):
         # Call parent function
         QtWidgets.QMainWindow.__init__(self)
@@ -228,8 +231,10 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             self.__threads.append((thread,dataReader))
             dataReader.moveToThread(thread)
 
+            # Control data acqusition
+            self.sigDataStop.connect(dataReader.abort)
+
             # Get data from reader
-            #dataReader.dataReady.connect(self.onDataReady)
             dataReader.dataDisplay.connect(self.onDataReady)
 
             # Start thread
@@ -240,13 +245,18 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         except Exception as error:
             self.showErrorMessage(str(error))
 
+    @QtCore.pyqtSlot()
     def stopAcquisition(self):
         try:
-            self.USBCommunicator.stopRead()
+            self.sigDataStop.emit()
+            for thread, worker in self.__threads:
+                thread.quit()
+                thread.wait()
+            self.USBCommunicator.closePort()
+
         except Exception as error:
             self.showErrorMessage(str(error))
 
-    #@QtCore.pyqtSlot(bool)
     @QtCore.pyqtSlot(np.ndarray)
     def onDataReady(self,data:np.ndarray):
         self.dc.updateFigure(data)
