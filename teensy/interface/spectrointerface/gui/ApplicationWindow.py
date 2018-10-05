@@ -24,15 +24,33 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 
 from spectrointerface.comm.USBCommunicator import USBCommunicator
 from spectrointerface.comm.dataReader import DataReader
+
 from spectrointerface.gui.SpectroGraph import SpectroGraph
+from spectrointerface.gui.Menu import MainMenu
+from spectrointerface.gui.Toolbar import USBToolbar, CCDControlToolbar, AcquisitionToolbar
+
 
 import numpy as np
 
 class ApplicationWindow(QtWidgets.QMainWindow):
+    """
+    Main application window. 
 
-    sigDataStop = QtCore.pyqtSignal()
+    Contains the menus, toolbars, etc.
 
+    Attributes
+    ----------
+
+    Methods
+    -------
+
+    """
     def __init__(self):
+        """
+        Constructor
+
+        Initializes the user interface and the corresponding actions.
+        """
         # Call parent function
         QtWidgets.QMainWindow.__init__(self)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
@@ -46,14 +64,36 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.width = 1024 
         self.height = 600
 
+
+        # Initialize the user interface
         self.initUI()
 
     def initUI(self):
+        # Title
         self.setWindowTitle(self.title)
-        self.setGeometry(self.left,self.top,self.width,self.height)
 
-        self.setupMenu()
-        self.setupMainCanvas()
+        # Geometry
+        self.setGeometry(self.left,self.top,self.width,self.height)
+        # Add a status bar
+        self.statusBar()
+
+        # Add a menu
+        self.__menu = MainMenu.fromApplicationWindow(self) # Create the main menu bar
+
+        # Create toolbars
+        self.__toolbarList = []
+        self.__toolbarList.append(USBToolbar(self))
+        self.__toolbarList.append(CCDControlToolbar(self))
+        self.__toolbarList.append(AcquisitionToolbar(self))
+
+        # Setup the main graph
+        #self.setupMainCanvas()
+
+    def getMainMenu(self):
+        return self.__menu
+
+    def getToolbarList(self):
+        return self.__toolbarList
 
     def setupMainCanvas(self):
         ### Main widget
@@ -68,205 +108,4 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         self.main_widget.setFocus()
         self.setCentralWidget(self.main_widget)
-
-    ### Menus
-    def setupMenu(self):
-        self.mainMenu = self.menuBar()
-        self.mainToolBar = self.addToolBar("Main actions")
-        self.inputToolBar = self.addToolBar("USB Control")
-        self.ccdToolBar = self.addToolBar("CCD Control")
-        self.acquireToolBar = self.addToolBar("Acquisition Control")
-
-        self.setupFileMenu()
-        self.setupCalibrateMenu()
-        self.setupAboutMenu()
-        self.setupCCDControl()
-        self.setupAcquisition()
-
-    def setupFileMenu(self):
-        fileMenu = self.mainMenu.addMenu('File') 
-        ### Save settings
-        settingsSaveButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-save"),'Save settings',self)
-        settingsSaveButton.setShortcut('Ctrl+S')
-        settingsSaveButton.setStatusTip('Save settings')
-        settingsSaveButton.triggered.connect(self.close) # TODO: IMplement settings save scheme
-        fileMenu.addAction(settingsSaveButton)
-
-        ### Exit button
-        exitButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("application-exit"),'Exit',self)
-        exitButton.setShortcut('Ctrl+Q')
-        exitButton.setStatusTip('Exit application')
-        exitButton.triggered.connect(self.close)
-        fileMenu.addAction(exitButton)
-
-        ### Toolbar
-        self.mainToolBar.addAction(exitButton)
-        self.mainToolBar.addAction(settingsSaveButton)
-
-    def setupAboutMenu(self):
-        self.mainMenu.addSeparator()
-        aboutMenu = self.mainMenu.addMenu('Help')
-        aboutMenu.addAction('&About',self.about)
-
-    def about(self):
-        QtWidgets.QMessageBox.about(self, "About", """Interface with a spectrometer head that uses an ILX526A CCD array""")
-
-    def setupCalibrateMenu(self):
-        calibrateMenu = self.mainMenu.addMenu('Calibrate')
-        
-        ### New calibration button
-        newCalibrationButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-new"),'New calibration',self)
-        newCalibrationButton.setShortcut('Ctrl+N')
-        newCalibrationButton.setStatusTip('Create a new calibration table')
-        newCalibrationButton.triggered.connect(self.calibrate)
-        calibrateMenu.addAction(newCalibrationButton)
-
-        ### Load calibration table button
-        loadCalibrationButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-open"),'Load calibration table',self)
-        loadCalibrationButton.setShortcut('Ctrl+L')
-        loadCalibrationButton.setStatusTip('Load an existing calibration table')
-        loadCalibrationButton.triggered.connect(self.calibrate)
-        calibrateMenu.addAction(loadCalibrationButton)
-
-        ### Toolbar
-        self.mainToolBar.addAction(newCalibrationButton)
-        self.mainToolBar.addAction(loadCalibrationButton)
-
-    def calibrate(self):
-        QtWidgets.QMessageBox.about(self,"New calibration","""Calibrate the spectrometer""")
-
-    def updatePortList(self):
-        # Clear the display
-        self.inputACM.clear()
-        # Refresh the port list on the communicator
-        self.USBCommunicator.refreshPortList()
-        pl = self.USBCommunicator.portList
-        nelem = len(pl)
-        
-        # Are there any items? If yes, list them all
-        if( len(pl) != 0):
-            for idx in range(0,nelem):
-                self.inputACM.addItem(pl[idx])
-        else:
-            self.inputACM.clear()
-            errorMessage = "No suitable ports found!" + "\n"
-            errorMessage += "Make sure the device is connected."
-            self.showErrorMessage(errorMessage)
-
-    def setupCCDControl(self):
-        ### Input port
-        inputLabel = QtWidgets.QLabel(self)
-        inputLabel.setText("Input port:")
-        self.inputACM = QtWidgets.QComboBox()
-        self.inputACM.setEditable(False)
-
-        # Create a USB Communicator
-        self.USBCommunicator = USBCommunicator()
-
-        # Create a button that can be used to re-scan for ports
-        scanPortButton = QtWidgets.QPushButton("Scan")
-        scanPortButton.setToolTip("Rescan for ports")
-        scanPortButton.clicked.connect(self.updatePortList)
-
-        self.inputToolBar.addWidget(inputLabel)
-        self.inputToolBar.addWidget(self.inputACM)
-        self.inputToolBar.addWidget(scanPortButton)
-
-        ### Exposure time
-        exposureLabel = QtWidgets.QLabel(self)
-        exposureLabel.setText("Exposure time (ms):")
-
-        exposureValidator = QtGui.QIntValidator(5,1500)
-        exposureValue = QtWidgets.QLineEdit(self)
-        exposureValue.setValidator(exposureValidator)
-        exposureValue.setText("5") # Default val.
-        exposureValue.setFixedWidth(60)
-        exposureValue.setAlignment(QtCore.Qt.AlignHCenter)
-
-        self.ccdToolBar.addWidget(exposureLabel)
-        self.ccdToolBar.addWidget(exposureValue)
-
-        ### Number of averages
-        averageLabel = QtWidgets.QLabel(self)
-        averageLabel.setText("Number of averages")
-
-        averageValidator = QtGui.QIntValidator(1,10)
-        averageValue = QtWidgets.QLineEdit(self)
-        averageValue.setValidator(averageValidator)
-        averageValue.setText("1") # Default val.
-        averageValue.setFixedWidth(60)
-        averageValue.setAlignment(QtCore.Qt.AlignHCenter)
-
-        self.ccdToolBar.addWidget(averageLabel)
-        self.ccdToolBar.addWidget(averageValue)
-
-    def setupAcquisition(self):
-        playButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("media-playback-start"),'Start acquisition',self)
-        stopButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("media-playback-stop"),'Stop acquisition',self)
-        recButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("media-record"),'Record data',self)
-
-        playButton.triggered.connect(self.startAcquisition)
-        stopButton.triggered.connect(self.stopAcquisition)
-
-        self.acquireToolBar.addAction(playButton)
-        self.acquireToolBar.addAction(stopButton)
-        self.acquireToolBar.addAction(recButton)
-
-    def startAcquisition(self):
-        ### Port tests
-        # Check that the port initially chosen is available and not already open
-        port = self.inputACM.currentText()
-        # Attempt to open the port
-        # Raise error and show error message if it fails to do so
-        self.__threads = []
-        self.__dataAcquisitionDone = 0
-        try:
-            # Open the port
-            self.USBCommunicator.openPort(port)
-
-            # Setup a thread
-            dataReader = DataReader()
-            thread = QtCore.QThread()
-            thread.setObjectName('datareader')
-            self.__threads.append((thread,dataReader))
-            dataReader.moveToThread(thread)
-
-            # Control data acqusition
-            self.sigDataStop.connect(dataReader.abort)
-
-            # Get data from reader
-            dataReader.dataDisplay.connect(self.onDataReady)
-
-            # Start thread
-            readFunc = lambda : dataReader.readUntil(self.USBCommunicator.ser,100)
-            thread.started.connect(readFunc)
-            thread.start()
-
-        except Exception as error:
-            self.showErrorMessage(str(error))
-
-    @QtCore.pyqtSlot()
-    def stopAcquisition(self):
-        try:
-            self.sigDataStop.emit()
-            for thread, worker in self.__threads:
-                thread.quit()
-                thread.wait()
-            self.USBCommunicator.closePort()
-
-        except Exception as error:
-            self.showErrorMessage(str(error))
-
-    @QtCore.pyqtSlot(np.ndarray)
-    def onDataReady(self,data:np.ndarray):
-        self.dc.updateFigure(data)
-
-    def showErrorMessage(self,errorString):
-        mb = QtWidgets.QMessageBox()
-        mb.setIcon(QtWidgets.QMessageBox.Critical)
-        mb.setWindowTitle("Error")
-        mb.setText(errorString)
-        mb.exec_()
-
-
 

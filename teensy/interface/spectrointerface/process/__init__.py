@@ -19,18 +19,3 @@
 # Contact info: https:/github.com/pytaunay
 # 
 # Source: https:/github.com/pytaunay/ILX526A
-
-#!/usr/bin/python3
-
-import sys
-
-import matplotlib
-matplotlib.use('Qt5Agg') # Make sure that we are using QT5
-
-from PyQt5.QtWidgets import QApplication
-
-from spectrointerface.App import App
-
-if __name__ == '__main__':
-    qApp = App(sys.argv)
-    sys.exit(qApp.exec_())
