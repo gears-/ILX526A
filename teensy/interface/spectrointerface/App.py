@@ -52,10 +52,8 @@ class App(QtWidgets.QApplication):
         # Link UI to actions
         self.__actionMap = ActionMap(self)
 
-    def getUSBCommunicator(self):
-        return self.__USBCommunicator
-
-    def getApplicationWindow(self):
+    @property
+    def apw(self):
         return self.__apw
 
 
@@ -142,7 +140,7 @@ class App(QtWidgets.QApplication):
 
     @QtCore.pyqtSlot(np.ndarray)
     def onDataReady(self,data:np.ndarray):
-        self.dc.updateFigure(data)
+        self.__apw._dc.updateFigure(data)
 
     def showErrorMessage(self,errorString):
         mb = QtWidgets.QMessageBox()
@@ -150,6 +148,5 @@ class App(QtWidgets.QApplication):
         mb.setWindowTitle("Error")
         mb.setText(errorString)
         mb.exec_()
-
 
 

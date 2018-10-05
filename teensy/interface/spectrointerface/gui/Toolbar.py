@@ -33,7 +33,8 @@ class Toolbar():
         self._toolbar = apw.addToolBar(self._toolbarName)
         self._buttonList = {}
 
-    def getButtonList(self):
+    @property
+    def buttonList(self):
         return self._buttonList
 
 #        self.__ccdToolBar = apw.addToolBar("CCD Control")

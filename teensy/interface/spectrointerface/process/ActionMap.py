@@ -27,12 +27,12 @@ class ActionMap():
 
     def __init__(self,qApp):
         # Application window
-        apw = qApp.getApplicationWindow()
+        apw = qApp.apw
 
         # List and link all menu buttons
-        mainMenu = apw.getMainMenu() 
-        for menu in mainMenu.getMenuList():
-            bList = menu.getButtonList()
+        mainMenu = apw.menu 
+        for menu in mainMenu.menuList:
+            bList = menu.buttonList
             for button in bList:
                 if button == "settingsSave":
                     bList[button].triggered.connect(apw.close)
@@ -47,9 +47,9 @@ class ActionMap():
 
 
         # List and link all toolbar buttons
-        toolbarList = apw.getToolbarList()
+        toolbarList = apw.toolbarList
         for tb in toolbarList:
-            bList = toolbarList[tb].getButtonList()
+            bList = toolbarList[tb].buttonList
 
             for button in bList:
                 if button == "scanPort":
@@ -58,8 +58,4 @@ class ActionMap():
                     bList[button].triggered.connect(qApp.startAcquisition)
                 elif button == "stop":
                     bList[button].triggered.connect(qApp.stopAcquisition)
-
-
-
-
 

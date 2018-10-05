@@ -34,7 +34,8 @@ class Menu():
         self._apw = apw
         self._buttonList = {} 
 
-    def getButtonList(self):
+    @property
+    def buttonList(self):
         return self._buttonList
 
     @classmethod
@@ -67,7 +68,8 @@ class MainMenu(Menu):
         self.__menuList.append(CalibrateMenu.fromParentMenu(self._menu,apw))
         self.__menuList.append(HelpMenu.fromParentMenu(self._menu,apw))
 
-    def getMenuList(self):
+    @property
+    def menuList(self):
         return self.__menuList
 
 

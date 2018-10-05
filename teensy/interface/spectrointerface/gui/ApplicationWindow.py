@@ -45,6 +45,15 @@ class ApplicationWindow(QtWidgets.QMainWindow):
     -------
 
     """
+    # Title
+    __title = "Spectrometer Interface 0.1"
+
+    # Geometry
+    __left = 200
+    __top = 200
+    __width = 1024 
+    __height = 600
+
     def __init__(self):
         """
         Constructor
@@ -55,25 +64,15 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         QtWidgets.QMainWindow.__init__(self)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
-        # Title
-        self.title = "Spectrometer Interface 0.1"
-
-        # Geometry
-        self.left = 200
-        self.top = 200
-        self.width = 1024 
-        self.height = 600
-
-
         # Initialize the user interface
         self.initUI()
 
     def initUI(self):
         # Title
-        self.setWindowTitle(self.title)
+        self.setWindowTitle(self.__title)
 
         # Geometry
-        self.setGeometry(self.left,self.top,self.width,self.height)
+        self.setGeometry(self.__left,self.__top,self.__width,self.__height)
         # Add a status bar
         self.statusBar()
 
@@ -91,21 +90,22 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     def setupMainCanvas(self):
         ### Main widget
-        self.main_widget = QtWidgets.QWidget(self)
+        self.__mainWidget = QtWidgets.QWidget(self)
 
         ### Matplotlib canvas
-        l = QtWidgets.QVBoxLayout(self.main_widget)
-        self.dc = SpectroGraph(self.main_widget, 
-                width=5, height=4, dpi=100)
-        l.addWidget(self.dc)
+        layout = QtWidgets.QVBoxLayout(self.__mainWidget)
+        self._dc = SpectroGraph(self.__mainWidget, width=5, height=4, dpi=100)
+        layout.addWidget(self._dc)
 
-        self.main_widget.setFocus()
-        self.setCentralWidget(self.main_widget)
+        self.__mainWidget.setFocus()
+        self.setCentralWidget(self.__mainWidget)
 
-    def getMainMenu(self):
+    @property
+    def menu(self):
         return self.__menu
 
-    def getToolbarList(self):
+    @property
+    def toolbarList(self):
         return self.__toolbarList
 
     def getToolbar(self,name):
