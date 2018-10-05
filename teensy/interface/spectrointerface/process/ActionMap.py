@@ -49,7 +49,7 @@ class ActionMap():
         # List and link all toolbar buttons
         toolbarList = apw.getToolbarList()
         for tb in toolbarList:
-            bList = tb.getButtonList()
+            bList = toolbarList[tb].getButtonList()
 
             for button in bList:
                 if button == "scanPort":

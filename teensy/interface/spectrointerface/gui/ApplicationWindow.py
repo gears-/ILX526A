@@ -81,10 +81,10 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.__menu = MainMenu.fromApplicationWindow(self) # Create the main menu bar
 
         # Create toolbars
-        self.__toolbarList = []
-        self.__toolbarList.append(USBToolbar(self))
-        self.__toolbarList.append(CCDControlToolbar(self))
-        self.__toolbarList.append(AcquisitionToolbar(self))
+        self.__toolbarList = {} 
+        self.__toolbarList["USB"] = USBToolbar(self)
+        self.__toolbarList["CCD"] = CCDControlToolbar(self)
+        self.__toolbarList["acquisition"] = AcquisitionToolbar(self)
 
         # Setup the main graph
         self.setupMainCanvas()
@@ -107,4 +107,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     def getToolbarList(self):
         return self.__toolbarList
+
+    def getToolbar(self,name):
+        return self.__toolbarList[name]
+
+
 

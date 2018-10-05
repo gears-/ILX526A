@@ -49,6 +49,9 @@ class App(QtWidgets.QApplication):
 
         # Link UI to actions
         self.__actionMap = ActionMap(self)
+
+        # Update the port list
+        self.updatePortList()
         
     def getUSBCommunicator(self):
         return self.__USBCommunicator
