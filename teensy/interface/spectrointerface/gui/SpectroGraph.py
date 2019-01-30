@@ -65,7 +65,7 @@ class SnaptoCursor(object):
         self.y = y
 
         # Text location in axes coords
-        self.txt = ax.text(0.5, 0.5, '', transform=ax.transAxes)
+        self.txt = ax.text(0.75, 0.9, '', transform=ax.transAxes)
 
     def mouse_move(self, event):
 
@@ -81,7 +81,7 @@ class SnaptoCursor(object):
         self.lx.set_ydata(y)
         self.ly.set_xdata(x)
 
-        self.txt.set_text('x=%1.2f, y=%1.2f' % (x, y))
+        self.txt.set_text('Pixel=%1.2f, Value=%1.2f' % (x, y))
         self.canvas.draw()
 
     def refreshData(self,x,y):
