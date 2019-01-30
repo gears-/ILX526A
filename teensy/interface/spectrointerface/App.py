@@ -20,7 +20,7 @@
 # 
 # Source: https:/github.com/pytaunay/ILX526A
 
-from PyQt5 import QtWidgets, QtCore 
+from PyQt5 import QtWidgets, QtCore, QtGui 
 
 import sys
 import numpy as np
@@ -30,6 +30,30 @@ from spectrointerface.comm.USBCommunicator import USBCommunicator
 from spectrointerface.process.ActionMap import ActionMap
 
 from spectrointerface.comm.dataReader import DataReader
+
+class MyPopup(QtWidgets.QWidget):
+    def __init__(self):
+        QtWidgets.QWidget.__init__(self)
+        QtWidgets.QWidget.setBackgroundRole(self,QtGui.QPalette.Shadow)
+        QtWidgets.QWidget.setAutoFillBackground(self,True)
+
+
+
+    ### Painter is required for our custom widget
+    def paintEvent(self, e):
+        qp = QtGui.QPainter(self)
+        qp.drawText(e.rect(),QtCore.Qt.AlignCenter,"Test")
+        qp.end()
+
+        self.tableWidget = QtWidgets.QTableWidget()
+        self.tableWidget.setRowCount(2)
+        self.tableWidget.setColumnCount(2)
+
+        
+
+        #dc.drawLine(0, 0, 100, 100)
+        #dc.drawLine(100, 0, 0, 100)
+
 
 class App(QtWidgets.QApplication):
     """ 
@@ -64,7 +88,20 @@ class App(QtWidgets.QApplication):
         QtWidgets.QMessageBox.about(self.__apw, "About", """Interface with a spectrometer head that uses an ILX526A CCD array""")
 
     def calibrate(self):
-        QtWidgets.QMessageBox.about(self.__apw,"New calibration","""Calibrate the spectrometer""")
+        #QtWidgets.QMessageBox.about(self.__apw,"New calibration","""Calibrate the spectrometer""")
+        self.w = MyPopup()
+        self.w.setWindowTitle("Calibration table")
+        self.w.setGeometry(QtCore.QRect(100, 100, 400, 200))
+        self.w.show()
+        #self.w.setWindowModality(Qt.ApplicationModal)
+        #self.w.exec_()
+        # Open a new window with a table 
+        # First column: wavelength
+        # Second column: pixel
+        
+        # If the user needs to enter stuff, then propose to calibrate with interactive recording
+        
+
 
     def updatePortList(self):
         # Get the ACM combo box
