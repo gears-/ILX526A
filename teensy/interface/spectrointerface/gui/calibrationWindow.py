@@ -25,7 +25,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 import numpy as np
 
 class CalibrationTableButtons(QtWidgets.QWidget):
-    def __init__(self):
+    def __init__(self,mainWindow):
         QtWidgets.QWidget.__init__(self)
 
         ### Create buttons
@@ -34,17 +34,22 @@ class CalibrationTableButtons(QtWidgets.QWidget):
 
         addPixButton = QtWidgets.QPushButton('Add pixel',self)
         addPixButton.setToolTip('Add another pixel to the list')
+        addPixButton.clicked.connect(mainWindow.onAddClick)
+
+        removePixButton = QtWidgets.QPushButton('Remove pixel',self)
+        removePixButton.setToolTip('Remove the last pixel from the list')
+        removePixButton.clicked.connect(mainWindow.onRemoveClick)
 
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(calcButton)
         layout.addWidget(addPixButton)
+        layout.addWidget(removePixButton)
 
         self.setLayout(layout)
 
 class CalibrationFileButtons(QtWidgets.QWidget):
-    def __init__(self):
+    def __init__(self,mainWindow):
         QtWidgets.QWidget.__init__(self)
-
 
         loadButton = QtWidgets.QPushButton('Load',self)
         saveButton = QtWidgets.QPushButton('Save',self)
@@ -63,21 +68,19 @@ class CalibrationFileButtons(QtWidgets.QWidget):
         
 
 class CalibrationButtons(QtWidgets.QWidget):
-    def __init__(self):
+    def __init__(self,mainWindow):
         QtWidgets.QWidget.__init__(self)
 
         ### Create a layout
         layout = QtWidgets.QGridLayout()
 
-        tableButtons = CalibrationTableButtons()
-        fileButtons = CalibrationFileButtons()
+        tableButtons = CalibrationTableButtons(mainWindow)
+        fileButtons = CalibrationFileButtons(mainWindow)
 
         layout.addWidget(tableButtons,0,0)
         layout.addWidget(fileButtons,1,0)
 
         self.setLayout(layout)
-
-
 
 class CalibrationWindow(QtWidgets.QWidget):
     def __init__(self,data=None):
@@ -121,12 +124,22 @@ class CalibrationWindow(QtWidgets.QWidget):
         layout.addWidget(self.tableWidget,1,0)
 
         ## Add buttons 
-        calibrationButtons = CalibrationButtons()
-        layout.addWidget(calibrationButtons,1,1)
-
+        self.calibrationButtons = CalibrationButtons(self)
+        layout.addWidget(self.calibrationButtons,1,1)
 
         ### Save layout
         self.setLayout(layout)
+
+    @QtCore.pyqtSlot()
+    def onAddClick(self):
+        nrow = self.tableWidget.rowCount()
+        self.tableWidget.insertRow(nrow)
+
+    @QtCore.pyqtSlot()
+    def onRemoveClick(self):
+        nrow = self.tableWidget.rowCount()
+        self.tableWidget.removeRow(nrow-1)
+
 
     @QtCore.pyqtSlot()
     def on_click(self):
