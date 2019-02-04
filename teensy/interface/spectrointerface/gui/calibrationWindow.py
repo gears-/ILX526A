@@ -23,6 +23,8 @@
 from PyQt5 import QtWidgets, QtCore, QtGui 
 
 import numpy as np
+import sys
+from scipy.interpolate import interp1d
 
 class CalibrationTableButtons(QtWidgets.QWidget):
     def __init__(self,mainWindow):
@@ -134,6 +136,7 @@ class CalibrationWindow(QtWidgets.QWidget):
         self.tableWidget.setHorizontalHeaderItem(0,QtWidgets.QTableWidgetItem("Pixel"))
         self.tableWidget.setHorizontalHeaderItem(1,QtWidgets.QTableWidgetItem("Wavelength (nm)"))
 
+        # TODO: USER INPUT VALIDATION!!!!
         self.tableWidget.setItem(0,0, QtWidgets.QTableWidgetItem(""))
         self.tableWidget.setItem(0,1, QtWidgets.QTableWidgetItem(""))
 
@@ -146,15 +149,23 @@ class CalibrationWindow(QtWidgets.QWidget):
         ### Save layout
         self.setLayout(layout)
 
-    # TODO: Remove magic number
+    # TODO: REMOVE MAGIC NUMBER
     def initCalVec(self):
-        self.calibration_table = np.zeros((3000,2))
+        self.calibration_table = np.zeros(3000)
+
+    def displayCalibrationTable(self):
+        self.tableWidget.setRowCount(0) # Delete all content
+        self.tableWidget.setRowCount(3000)
+        for pix in range(3000):
+            str_pix = str(pix)
+            str_wl = str(self.calibration_table[pix])
+            self.tableWidget.setItem(pix,0,QtWidgets.QTableWidgetItem(str_pix))
+            self.tableWidget.setItem(pix,1,QtWidgets.QTableWidgetItem(str_wl))
 
     @QtCore.pyqtSlot()
     def onAddClick(self):
         nrow = self.tableWidget.rowCount()
         self.tableWidget.insertRow(nrow)
-
 
     @QtCore.pyqtSlot()
     def onRemoveClick(self):
@@ -163,7 +174,44 @@ class CalibrationWindow(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def onCalculateClick(self):
-        print("TODO: Calculations")
+        # First reorder things
+        self.tableWidget.sortItems(0) # Ascending order
+
+        # Number of entries
+        nrow = self.tableWidget.rowCount()
+        holder = np.zeros((nrow,2),dtype=np.float64)
+
+        # Role
+        role = QtCore.Qt.DisplayRole
+
+        # Iterate over rows
+        for row in range(nrow):
+            try:
+                pix =  (int)(self.tableWidget.item(row,0).data(role))
+                wl = (float)(self.tableWidget.item(row,1).data(role))
+
+                if pix < 0 or pix >= 3000:
+                    raise ValueError
+
+                holder[row,:] = (pix,wl)
+            except ValueError:
+                print("ERROR: Pixel value is negative or greater than 2999")
+
+            except:
+                print("ERROR: Cannot read data at row ",row+1," : ",sys.exc_info()[0])
+
+        # Now, do a least squares fit 
+        coeffs = np.polyfit(holder[:,0],holder[:,1],deg=1)
+        pfit = np.poly1d(coeffs)
+
+        # Get the fit evaluated at the pixels of interest
+        pix_array = np.linspace(0,3000-1,3000)
+        wl_array = pfit(pix_array)
+
+        # Store calibration table
+        self.calibration_table = wl_array
+
+        self.displayCalibrationTable()
 
     @QtCore.pyqtSlot()
     def onCancelClick(self):
