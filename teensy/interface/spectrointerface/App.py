@@ -31,29 +31,51 @@ from spectrointerface.process.ActionMap import ActionMap
 
 from spectrointerface.comm.dataReader import DataReader
 
-class MyPopup(QtWidgets.QWidget):
-    def __init__(self):
+class calibrationWindow(QtWidgets.QWidget):
+    def __init__(self,data=None):
         QtWidgets.QWidget.__init__(self)
-        QtWidgets.QWidget.setBackgroundRole(self,QtGui.QPalette.Shadow)
-        QtWidgets.QWidget.setAutoFillBackground(self,True)
 
+        ### Populate the calibrationWindow
+        ## Grid layout for the widgets
+        layout = QtWidgets.QGridLayout()
+        layout.setColumnStretch(0,4)
+        layout.setColumnStretch(1,4)
 
+        ## Create an information text box
+        infoText = QtWidgets.QTextEdit()
+        infoText.setText("Test!")
+        infoText.setReadOnly(True)
 
-    ### Painter is required for our custom widget
-    def paintEvent(self, e):
-        qp = QtGui.QPainter(self)
-        qp.drawText(e.rect(),QtCore.Qt.AlignCenter,"Test")
-        qp.end()
+        layout.addWidget(infoText,0,0,1,2,QtCore.Qt.AlignCenter)
 
+        ## Create a table
         self.tableWidget = QtWidgets.QTableWidget()
         self.tableWidget.setRowCount(2)
         self.tableWidget.setColumnCount(2)
 
-        
+        # Change the header names
+        self.tableWidget.setHorizontalHeaderItem(0,QtWidgets.QTableWidgetItem("Pixel"))
+        self.tableWidget.setHorizontalHeaderItem(1,QtWidgets.QTableWidgetItem("Wavelength (nm)"))
 
-        #dc.drawLine(0, 0, 100, 100)
-        #dc.drawLine(100, 0, 0, 100)
+        self.tableWidget.setItem(0,0, QtWidgets.QTableWidgetItem(""))
+        self.tableWidget.setItem(0,1, QtWidgets.QTableWidgetItem(""))
+        self.tableWidget.setItem(1,0, QtWidgets.QTableWidgetItem(""))
+        self.tableWidget.setItem(1,1, QtWidgets.QTableWidgetItem(""))
+        self.tableWidget.move(0,0)
 
+        self.tableWidget.doubleClicked.connect(self.on_click)
+
+        layout.addWidget(self.tableWidget,1,0)
+
+        ## Add buttons 
+
+        self.setLayout(layout)
+
+    @QtCore.pyqtSlot()
+    def on_click(self):
+        print("\n")
+        for currentQTableWidgetItem in self.tableWidget.selectedItems():
+            print(currentQTableWidgetItem.row(), currentQTableWidgetItem.column(), currentQTableWidgetItem.text())
 
 class App(QtWidgets.QApplication):
     """ 
@@ -89,10 +111,11 @@ class App(QtWidgets.QApplication):
 
     def calibrate(self):
         #QtWidgets.QMessageBox.about(self.__apw,"New calibration","""Calibrate the spectrometer""")
-        self.w = MyPopup()
-        self.w.setWindowTitle("Calibration table")
-        self.w.setGeometry(QtCore.QRect(100, 100, 400, 200))
+        self.w = calibrationWindow()
         self.w.show()
+        #self.w.setWindowTitle("Calibration table")
+        #self.w.setGeometry(QtCore.QRect(100, 100, 400, 200))
+        #self.w.show()
         #self.w.setWindowModality(Qt.ApplicationModal)
         #self.w.exec_()
         # Open a new window with a table 
