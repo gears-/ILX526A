@@ -24,9 +24,65 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 import numpy as np
 
+class CalibrationTableButtons(QtWidgets.QWidget):
+    def __init__(self):
+        QtWidgets.QWidget.__init__(self)
+
+        ### Create buttons
+        calcButton = QtWidgets.QPushButton('Calculate',self)
+        calcButton.setToolTip('Compute the calibration based on the current entries')
+
+        addPixButton = QtWidgets.QPushButton('Add pixel',self)
+        addPixButton.setToolTip('Add another pixel to the list')
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(calcButton)
+        layout.addWidget(addPixButton)
+
+        self.setLayout(layout)
+
+class CalibrationFileButtons(QtWidgets.QWidget):
+    def __init__(self):
+        QtWidgets.QWidget.__init__(self)
+
+
+        loadButton = QtWidgets.QPushButton('Load',self)
+        saveButton = QtWidgets.QPushButton('Save',self)
+        cancelButton = QtWidgets.QPushButton('Cancel',self)
+        resetButton = QtWidgets.QPushButton('Reset',self)
+
+        cancelButton.setToolTip('Cancel calibration')
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(loadButton)
+        layout.addWidget(saveButton)
+        layout.addWidget(resetButton)
+        layout.addWidget(cancelButton)
+
+        self.setLayout(layout)
+        
+
+class CalibrationButtons(QtWidgets.QWidget):
+    def __init__(self):
+        QtWidgets.QWidget.__init__(self)
+
+        ### Create a layout
+        layout = QtWidgets.QGridLayout()
+
+        tableButtons = CalibrationTableButtons()
+        fileButtons = CalibrationFileButtons()
+
+        layout.addWidget(tableButtons,0,0)
+        layout.addWidget(fileButtons,1,0)
+
+        self.setLayout(layout)
+
+
+
 class CalibrationWindow(QtWidgets.QWidget):
     def __init__(self,data=None):
         QtWidgets.QWidget.__init__(self)
+        self.setWindowTitle("Calibration")
 
         ### Populate the calibrationWindow
         ## Grid layout for the widgets
@@ -35,8 +91,14 @@ class CalibrationWindow(QtWidgets.QWidget):
         layout.setColumnStretch(1,4)
 
         ## Create an information text box
+        infostr =  "Enter the wavelength for each pixel that can be measured,"
+        infostr += " or load an existing calibration table.\n"
+        infostr += "When ready, hit 'Calculate' to compute the whole "
+        infostr += "calibration table."
+        infostr = str(infostr)
+
         infoText = QtWidgets.QTextEdit()
-        infoText.setText("Test!")
+        infoText.setText(infostr)
         infoText.setReadOnly(True)
 
         layout.addWidget(infoText,0,0,1,2,QtCore.Qt.AlignCenter)
@@ -52,8 +114,6 @@ class CalibrationWindow(QtWidgets.QWidget):
 
         self.tableWidget.setItem(0,0, QtWidgets.QTableWidgetItem(""))
         self.tableWidget.setItem(0,1, QtWidgets.QTableWidgetItem(""))
-        self.tableWidget.setItem(1,0, QtWidgets.QTableWidgetItem(""))
-        self.tableWidget.setItem(1,1, QtWidgets.QTableWidgetItem(""))
         self.tableWidget.move(0,0)
 
         self.tableWidget.doubleClicked.connect(self.on_click)
@@ -61,7 +121,11 @@ class CalibrationWindow(QtWidgets.QWidget):
         layout.addWidget(self.tableWidget,1,0)
 
         ## Add buttons 
+        calibrationButtons = CalibrationButtons()
+        layout.addWidget(calibrationButtons,1,1)
 
+
+        ### Save layout
         self.setLayout(layout)
 
     @QtCore.pyqtSlot()
