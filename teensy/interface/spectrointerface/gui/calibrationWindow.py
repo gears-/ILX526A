@@ -72,7 +72,6 @@ class CalibrationFileButtons(QtWidgets.QWidget):
         saveButton.clicked.connect(mainWindow.onSaveClick)
         cancelButton.clicked.connect(mainWindow.onCancelClick)
 
-
         ### Add to layout
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(loadButton)
@@ -103,6 +102,10 @@ class CalibrationWindow(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self)
         self.setWindowTitle("Calibration")
 
+        self.initUI()
+        self.initCalVec()
+
+    def initUI(self):
         ### Populate the calibrationWindow
         ## Grid layout for the widgets
         layout = QtWidgets.QGridLayout()
@@ -133,9 +136,6 @@ class CalibrationWindow(QtWidgets.QWidget):
 
         self.tableWidget.setItem(0,0, QtWidgets.QTableWidgetItem(""))
         self.tableWidget.setItem(0,1, QtWidgets.QTableWidgetItem(""))
-        self.tableWidget.move(0,0)
-
-        self.tableWidget.doubleClicked.connect(self.on_click)
 
         layout.addWidget(self.tableWidget,1,0)
 
@@ -146,10 +146,15 @@ class CalibrationWindow(QtWidgets.QWidget):
         ### Save layout
         self.setLayout(layout)
 
+    # TODO: Remove magic number
+    def initCalVec(self):
+        self.calibration_table = np.zeros((3000,2))
+
     @QtCore.pyqtSlot()
     def onAddClick(self):
         nrow = self.tableWidget.rowCount()
         self.tableWidget.insertRow(nrow)
+
 
     @QtCore.pyqtSlot()
     def onRemoveClick(self):
@@ -173,8 +178,10 @@ class CalibrationWindow(QtWidgets.QWidget):
         
         ffilter= "All Files (*);;Calibration file (*.cal)"
         try:
+            # Open file and get calibration table
             fname, _ = QtWidgets.QFileDialog.getOpenFileName(self,"Open file","",ffilter,options=options)
-            print(fname)
+            self.calibration_table = np.load(fname)
+            print(self.calibration_table)
         except:
             print("ERROR: Could not open calibration file")
 
@@ -185,17 +192,8 @@ class CalibrationWindow(QtWidgets.QWidget):
         
         ffilter= "All Files (*);;Calibration file (*.cal)"
         try:
-            # Open file
             fname, _ = QtWidgets.QFileDialog.getSaveFileName(self,"Save file","",ffilter,options=options)
-
-            # Read content, then save data
-            print(fname)
+            np.save(fname,self.calibration_table)
         except:
             print("ERROR: Could not save calibration file")
-
-    @QtCore.pyqtSlot()
-    def on_click(self):
-        print("\n")
-        for currentQTableWidgetItem in self.tableWidget.selectedItems():
-            print(currentQTableWidgetItem.row(), currentQTableWidgetItem.column(), currentQTableWidgetItem.text())
 
