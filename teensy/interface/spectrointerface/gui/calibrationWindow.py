@@ -30,16 +30,20 @@ class CalibrationTableButtons(QtWidgets.QWidget):
 
         ### Create buttons
         calcButton = QtWidgets.QPushButton('Calculate',self)
-        calcButton.setToolTip('Compute the calibration based on the current entries')
-
         addPixButton = QtWidgets.QPushButton('Add pixel',self)
-        addPixButton.setToolTip('Add another pixel to the list')
-        addPixButton.clicked.connect(mainWindow.onAddClick)
-
         removePixButton = QtWidgets.QPushButton('Remove pixel',self)
+
+        ### Add tool tips
+        calcButton.setToolTip('Compute the calibration based on the current entries')
+        addPixButton.setToolTip('Add another pixel to the list')
         removePixButton.setToolTip('Remove the last pixel from the list')
+
+        ### Connect to buttons
+        calcButton.clicked.connect(mainWindow.onCalculateClick)
+        addPixButton.clicked.connect(mainWindow.onAddClick)
         removePixButton.clicked.connect(mainWindow.onRemoveClick)
 
+        ### Add layout
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(calcButton)
         layout.addWidget(addPixButton)
@@ -51,13 +55,23 @@ class CalibrationFileButtons(QtWidgets.QWidget):
     def __init__(self,mainWindow):
         QtWidgets.QWidget.__init__(self)
 
+        ### Create buttons
         loadButton = QtWidgets.QPushButton('Load',self)
         saveButton = QtWidgets.QPushButton('Save',self)
         cancelButton = QtWidgets.QPushButton('Cancel',self)
         resetButton = QtWidgets.QPushButton('Reset',self)
 
+        ### Set tool tips
+        loadButton.setToolTip('Load an existing calibration table')
+        saveButton.setToolTip('Save the current calibration table')
+        resetButton.setToolTip('Reset the calibration table')
         cancelButton.setToolTip('Cancel calibration')
 
+        ### Link signal
+        cancelButton.clicked.connect(mainWindow.onCancelClick)
+
+
+        ### Add to layout
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(loadButton)
         layout.addWidget(saveButton)
@@ -140,6 +154,13 @@ class CalibrationWindow(QtWidgets.QWidget):
         nrow = self.tableWidget.rowCount()
         self.tableWidget.removeRow(nrow-1)
 
+    @QtCore.pyqtSlot()
+    def onCalculateClick(self):
+        print("TODO: Calculations")
+
+    @QtCore.pyqtSlot()
+    def onCancelClick(self):
+        self.close()
 
     @QtCore.pyqtSlot()
     def on_click(self):
