@@ -68,6 +68,8 @@ class CalibrationFileButtons(QtWidgets.QWidget):
         cancelButton.setToolTip('Cancel calibration')
 
         ### Link signal
+        loadButton.clicked.connect(mainWindow.onLoadClick)
+        saveButton.clicked.connect(mainWindow.onSaveClick)
         cancelButton.clicked.connect(mainWindow.onCancelClick)
 
 
@@ -162,10 +164,38 @@ class CalibrationWindow(QtWidgets.QWidget):
     def onCancelClick(self):
         self.close()
 
+    ### TODO: HANDLE ERRORS BETTER HERE
+    ### TODO: USE A LOGGER
+    @QtCore.pyqtSlot()
+    def onLoadClick(self):
+        options = QtWidgets.QFileDialog.Options()
+        options |= QtWidgets.QFileDialog.DontUseNativeDialog
+        
+        ffilter= "All Files (*);;Calibration file (*.cal)"
+        try:
+            fname, _ = QtWidgets.QFileDialog.getOpenFileName(self,"Open file","",ffilter,options=options)
+            print(fname)
+        except:
+            print("ERROR: Could not open calibration file")
+
+    @QtCore.pyqtSlot()
+    def onSaveClick(self):
+        options = QtWidgets.QFileDialog.Options()
+        options |= QtWidgets.QFileDialog.DontUseNativeDialog
+        
+        ffilter= "All Files (*);;Calibration file (*.cal)"
+        try:
+            # Open file
+            fname, _ = QtWidgets.QFileDialog.getSaveFileName(self,"Save file","",ffilter,options=options)
+
+            # Read content, then save data
+            print(fname)
+        except:
+            print("ERROR: Could not save calibration file")
+
     @QtCore.pyqtSlot()
     def on_click(self):
         print("\n")
         for currentQTableWidgetItem in self.tableWidget.selectedItems():
             print(currentQTableWidgetItem.row(), currentQTableWidgetItem.column(), currentQTableWidgetItem.text())
-
 
