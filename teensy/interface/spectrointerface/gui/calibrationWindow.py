@@ -53,6 +53,9 @@ class CalibrationTableButtons(QtWidgets.QWidget):
 
         self.setLayout(layout)
 
+        sspolicy = QtWidgets.QSizePolicy.Expanding
+        self.setSizePolicy(sspolicy,sspolicy)
+
 class CalibrationFileButtons(QtWidgets.QWidget):
     def __init__(self,mainWindow):
         QtWidgets.QWidget.__init__(self)
@@ -73,6 +76,7 @@ class CalibrationFileButtons(QtWidgets.QWidget):
         loadButton.clicked.connect(mainWindow.onLoadClick)
         saveButton.clicked.connect(mainWindow.onSaveClick)
         cancelButton.clicked.connect(mainWindow.onCancelClick)
+        resetButton.clicked.connect(mainWindow.onResetClick)
 
         ### Add to layout
         layout = QtWidgets.QVBoxLayout()
@@ -100,14 +104,30 @@ class CalibrationButtons(QtWidgets.QWidget):
         self.setLayout(layout)
 
 class CalibrationWindow(QtWidgets.QWidget):
+
+    __title = "Calibration"
+    __left = 200
+    __top = 200
+    __width = 768 
+    __height = 400 
+
     def __init__(self,data=None):
         QtWidgets.QWidget.__init__(self)
-        self.setWindowTitle("Calibration")
 
         self.initUI()
         self.initCalVec()
 
     def initUI(self):
+        # Title
+        self.setWindowTitle(self.__title)
+
+        # Geometry
+        self.setGeometry(self.__left,self.__top,self.__width,self.__height)
+
+        # Set minimum size as the proposed geometry
+        windowSize = self.size()
+        self.setMinimumSize(windowSize)
+
         ### Populate the calibrationWindow
         ## Grid layout for the widgets
         layout = QtWidgets.QGridLayout()
@@ -126,21 +146,38 @@ class CalibrationWindow(QtWidgets.QWidget):
         infoText.setReadOnly(True)
 
         layout.addWidget(infoText,0,0,1,2,QtCore.Qt.AlignCenter)
+        # Adjust textbox size
+        sspolicy = QtWidgets.QSizePolicy.Maximum
+        infoText.setMinimumSize(self.__width-32,self.__height/4)
+        infoText.setSizePolicy(sspolicy,sspolicy)
 
         ## Create a table
         self.tableWidget = QtWidgets.QTableWidget()
+        self.tableWidget.setSizeAdjustPolicy(
+                QtWidgets.QAbstractScrollArea.AdjustToContents)
         self.tableWidget.setRowCount(2)
         self.tableWidget.setColumnCount(2)
 
         # Change the header names
+        header = self.tableWidget.horizontalHeader()
+        for col in range(2):
+            header.setSectionResizeMode(col,QtWidgets.QHeaderView.ResizeToContents)
+
         self.tableWidget.setHorizontalHeaderItem(0,QtWidgets.QTableWidgetItem("Pixel"))
         self.tableWidget.setHorizontalHeaderItem(1,QtWidgets.QTableWidgetItem("Wavelength (nm)"))
+
+        # Remove the row numbers to avoid confusion
+        self.tableWidget.verticalHeader().setVisible(False)
+        
 
         # TODO: USER INPUT VALIDATION!!!!
         self.tableWidget.setItem(0,0, QtWidgets.QTableWidgetItem(""))
         self.tableWidget.setItem(0,1, QtWidgets.QTableWidgetItem(""))
 
         layout.addWidget(self.tableWidget,1,0)
+
+        self.tableWidget.setMinimumSize(self.__width/2,self.__height/2)
+        self.tableWidget.setSizePolicy(sspolicy,sspolicy)
 
         ## Add buttons 
         self.calibrationButtons = CalibrationButtons(self)
@@ -244,4 +281,11 @@ class CalibrationWindow(QtWidgets.QWidget):
             np.save(fname,self.calibration_table)
         except:
             print("ERROR: Could not save calibration file")
+
+    @QtCore.pyqtSlot()
+    def onResetClick(self):
+        self.tableWidget.setRowCount(0)
+        self.tableWidget.setRowCount(1)
+
+    ### TODO: Implement deletion of a given row
 
