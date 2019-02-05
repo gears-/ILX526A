@@ -203,6 +203,7 @@ class CalibrationWindow(QtWidgets.QWidget):
             self.tableWidget.setItem(pix,0,QtWidgets.QTableWidgetItem(str_pix))
             self.tableWidget.setItem(pix,1,QtWidgets.QTableWidgetItem(str_wl))
 
+    ### METHODS CALLED ON CLICK
     @QtCore.pyqtSlot()
     def onAddClick(self):
         nrow = self.tableWidget.rowCount()
@@ -236,10 +237,15 @@ class CalibrationWindow(QtWidgets.QWidget):
 
                 holder[row,:] = (pix,wl)
             except ValueError:
-                print("ERROR: Pixel value is negative or greater than 2999")
+                errorMessage = "Pixel value is negative or greater than 2999"
+                self.showErrorMessage(errorMessage)
 
             except:
-                print("ERROR: Cannot read data at row ",row+1," : ",sys.exc_info()[0])
+                errorMessage = "Cannot read data at row "
+                errorMessage += str(row+1)
+                errorMessage += " : "
+                errorMessage += str(sys.exc_info()[0])
+                self.showErrorMessage(errorMessage)
 
         # Now, do a least squares fit 
         coeffs = np.polyfit(holder[:,0],holder[:,1],deg=1)
@@ -248,6 +254,12 @@ class CalibrationWindow(QtWidgets.QWidget):
         # Get the fit evaluated at the pixels of interest
         pix_array = np.linspace(0,3000-1,3000)
         wl_array = pfit(pix_array)
+
+        # Check the resulting array is correct
+        if np.min(wl_array) < 200 or np.max(wl_array) > 1000:
+            errorMessage = "Minimum value of resulting array is less than 200 nm or max. value is greater than 1,000. Check entries"
+            self.showErrorMessage(errorMessage)
+            return
 
         # Store calibration table
         self.calibration_table = wl_array
@@ -281,7 +293,8 @@ class CalibrationWindow(QtWidgets.QWidget):
             self.calibration_table = np.load(fname)
             self.displayCalibrationTable()
         except:
-            print("ERROR: Could not open calibration file")
+            errorMessage = "Could not open calibration file"
+            self.showErrorMessage(errorMessage)
 
     @QtCore.pyqtSlot()
     def onSaveClick(self):
@@ -293,7 +306,8 @@ class CalibrationWindow(QtWidgets.QWidget):
             fname, _ = QtWidgets.QFileDialog.getSaveFileName(self,"Save file","",ffilter,options=options)
             np.save(fname,self.calibration_table)
         except:
-            print("ERROR: Could not save calibration file")
+            errorMessage = "Could not save calibration file"
+            self.showErrorMessage(errorMessage)
 
     @QtCore.pyqtSlot()
     def onResetClick(self):
@@ -301,4 +315,11 @@ class CalibrationWindow(QtWidgets.QWidget):
         self.tableWidget.setRowCount(1)
 
     ### TODO: Implement deletion of a given row
+
+    def showErrorMessage(self,errorString):
+        mb = QtWidgets.QMessageBox()
+        mb.setIcon(QtWidgets.QMessageBox.Critical)
+        mb.setWindowTitle("Error")
+        mb.setText(errorString)
+        mb.exec_()
 
