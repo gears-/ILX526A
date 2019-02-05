@@ -56,6 +56,8 @@ class SnaptoCursor(object):
     For simplicity, I'm assuming x is sorted
     """
 
+    __calibration_table = None
+
     def __init__(self, ax, x, y, canvas):
         self.ax = ax
         self.canvas = canvas
@@ -77,20 +79,35 @@ class SnaptoCursor(object):
         indx = min(np.searchsorted(self.x, [x])[0], len(self.x) - 1)
         x = self.x[indx]
         y = self.y[indx]
+        try: 
+            wl = self.__calibration_table[indx,1]
+        except:
+            wl = None
+        
+        
         # update the line positions
         self.lx.set_ydata(y)
         self.ly.set_xdata(x)
+        
+        try:
+            self.txt.set_text('Pixel=%1.2f, Value=%1.2f, Wl=%1.2f' % (x, y, wl))
+        except:
+            self.txt.set_text('Pixel=%1.2f, Value=%1.2f' % (x, y))
 
-        self.txt.set_text('Pixel=%1.2f, Value=%1.2f' % (x, y))
         self.canvas.draw()
 
     def refreshData(self,x,y):
         self.x = x
         self.y = y
 
+    def setCalibrationTable(self,calibration_table):
+        self.__calibration_table = np.copy(calibration_table)
+
 
 class SpectroGraph(MplCanvas):
     """A canvas that updates itself with a new plot."""
+
+    __calibration_table = None
 
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         MplCanvas.__init__(self,parent,width,height,dpi)
@@ -114,4 +131,7 @@ class SpectroGraph(MplCanvas):
         self.cursor.refreshData(self.li.get_xdata(),self.li.get_ydata())
         self.draw()
         self.flush_events()
+
+    def setCalibrationTable(self,calibration_table):
+        self.__calibration_table = np.copy(calibration_table)
 

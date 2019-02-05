@@ -21,10 +21,10 @@
 # Source: https:/github.com/pytaunay/ILX526A
 
 from PyQt5 import QtWidgets, QtCore, QtGui 
+from spectrointerface import App
 
 import numpy as np
 import sys
-from scipy.interpolate import interp1d
 
 class CalibrationTableButtons(QtWidgets.QWidget):
     def __init__(self,mainWindow):
@@ -115,8 +115,9 @@ class CalibrationWindow(QtWidgets.QWidget):
     __width = 768 
     __height = 400 
     __calibrated = False
+    
 
-    def __init__(self):
+    def __init__(self,App):
         QtWidgets.QWidget.__init__(self)
 
         self.initUI()
@@ -125,6 +126,9 @@ class CalibrationWindow(QtWidgets.QWidget):
             self.displayCalibrationTable()
         else:
             self.initCalVec()
+
+        # Store a pointer to our parent app
+        self.__apw = App
 
 
     def initUI(self):
@@ -211,6 +215,7 @@ class CalibrationWindow(QtWidgets.QWidget):
 
     def getCalibrationState(self):
         return self.__calibrated
+
 
     ### METHODS CALLED ON CLICK
     @QtCore.pyqtSlot()

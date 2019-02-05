@@ -51,7 +51,7 @@ class App(QtWidgets.QApplication):
         self.__apw = ApplicationWindow()
         self.__apw.show()
 
-        self.__cbw = CalibrationWindow()
+        self.__cbw = CalibrationWindow(self)
 
         # Link UI to actions
         self.__actionMap = ActionMap(self)
