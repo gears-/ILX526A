@@ -29,7 +29,7 @@ from spectrointerface.gui.ApplicationWindow import ApplicationWindow
 from spectrointerface.comm.USBCommunicator import USBCommunicator
 from spectrointerface.process.ActionMap import ActionMap
 
-from spectrointerface.comm.dataReader import DataReader
+from spectrointerface.comm.DataReader import DataReader
 
 from spectrointerface.gui.CalibrationWindow import CalibrationWindow
 
