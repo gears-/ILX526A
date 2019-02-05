@@ -114,12 +114,18 @@ class CalibrationWindow(QtWidgets.QWidget):
     __top = 200
     __width = 768 
     __height = 400 
+    __calibrated = False
 
-    def __init__(self,data=None):
+    def __init__(self):
         QtWidgets.QWidget.__init__(self)
 
         self.initUI()
-        self.initCalVec()
+
+        if self.__calibrated:
+            self.displayCalibrationTable()
+        else:
+            self.initCalVec()
+
 
     def initUI(self):
         # Title
@@ -203,6 +209,9 @@ class CalibrationWindow(QtWidgets.QWidget):
             self.tableWidget.setItem(pix,0,QtWidgets.QTableWidgetItem(str_pix))
             self.tableWidget.setItem(pix,1,QtWidgets.QTableWidgetItem(str_wl))
 
+    def getCalibrationState(self):
+        return self.__calibrated
+
     ### METHODS CALLED ON CLICK
     @QtCore.pyqtSlot()
     def onAddClick(self):
@@ -270,6 +279,9 @@ class CalibrationWindow(QtWidgets.QWidget):
     def onFinishClick(self):
         # Make sure we calculate, even if it is unnecessary
         self.onCalculateClick()
+
+        # Ensure that we store the calibration state
+        self.__calibrated = True
         
         # Then quit
         self.close()

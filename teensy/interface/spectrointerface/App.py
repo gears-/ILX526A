@@ -51,6 +51,8 @@ class App(QtWidgets.QApplication):
         self.__apw = ApplicationWindow()
         self.__apw.show()
 
+        self.__cbw = CalibrationWindow()
+
         # Link UI to actions
         self.__actionMap = ActionMap(self)
 
@@ -66,21 +68,7 @@ class App(QtWidgets.QApplication):
         QtWidgets.QMessageBox.about(self.__apw, "About", """Interface with a spectrometer head that uses an ILX526A CCD array""")
 
     def calibrate(self):
-        #QtWidgets.QMessageBox.about(self.__apw,"New calibration","""Calibrate the spectrometer""")
-        self.w = CalibrationWindow()
-        self.w.show()
-        #self.w.setWindowTitle("Calibration table")
-        #self.w.setGeometry(QtCore.QRect(100, 100, 400, 200))
-        #self.w.show()
-        #self.w.setWindowModality(Qt.ApplicationModal)
-        #self.w.exec_()
-        # Open a new window with a table 
-        # First column: wavelength
-        # Second column: pixel
-        
-        # If the user needs to enter stuff, then propose to calibrate with interactive recording
-        
-
+        self.__cbw.show()
 
     def updatePortList(self):
         # Get the ACM combo box
