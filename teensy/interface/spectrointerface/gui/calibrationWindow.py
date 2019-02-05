@@ -34,22 +34,26 @@ class CalibrationTableButtons(QtWidgets.QWidget):
         calcButton = QtWidgets.QPushButton('Calculate',self)
         addPixButton = QtWidgets.QPushButton('Add pixel',self)
         removePixButton = QtWidgets.QPushButton('Remove pixel',self)
+        finishButton = QtWidgets.QPushButton('Finish',self)
 
         ### Add tool tips
         calcButton.setToolTip('Compute the calibration based on the current entries')
         addPixButton.setToolTip('Add another pixel to the list')
         removePixButton.setToolTip('Remove the last pixel from the list')
+        finishButton.setToolTip('Finish calibration and use current table')
 
         ### Connect to buttons
         calcButton.clicked.connect(mainWindow.onCalculateClick)
         addPixButton.clicked.connect(mainWindow.onAddClick)
         removePixButton.clicked.connect(mainWindow.onRemoveClick)
+        finishButton.clicked.connect(mainWindow.onFinishClick)
 
         ### Add layout
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(calcButton)
         layout.addWidget(addPixButton)
         layout.addWidget(removePixButton)
+        layout.addWidget(finishButton)
 
         self.setLayout(layout)
 
@@ -251,6 +255,15 @@ class CalibrationWindow(QtWidgets.QWidget):
         self.displayCalibrationTable()
 
     @QtCore.pyqtSlot()
+    def onFinishClick(self):
+        # Make sure we calculate, even if it is unnecessary
+        self.onCalculateClick()
+        
+        # Then quit
+        self.close()
+
+
+    @QtCore.pyqtSlot()
     def onCancelClick(self):
         self.close()
 
@@ -266,7 +279,7 @@ class CalibrationWindow(QtWidgets.QWidget):
             # Open file and get calibration table
             fname, _ = QtWidgets.QFileDialog.getOpenFileName(self,"Open file","",ffilter,options=options)
             self.calibration_table = np.load(fname)
-            print(self.calibration_table)
+            self.displayCalibrationTable()
         except:
             print("ERROR: Could not open calibration file")
 
