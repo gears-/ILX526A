@@ -31,7 +31,7 @@ from spectrointerface.process.ActionMap import ActionMap
 
 from spectrointerface.comm.dataReader import DataReader
 
-from spectrointerface.gui.calibrationWindow import CalibrationWindow
+from spectrointerface.gui.CalibrationWindow import CalibrationWindow
 
 class App(QtWidgets.QApplication):
     """ 
