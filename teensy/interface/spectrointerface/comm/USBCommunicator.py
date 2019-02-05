@@ -26,7 +26,7 @@ import threading
 
 from PyQt5 import QtWidgets,QtCore
 
-from spectrointerface.comm.dataReader import DataReader
+from spectrointerface.comm.DataReader import DataReader
 
 class USBCommunicator():
     """

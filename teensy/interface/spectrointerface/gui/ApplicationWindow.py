@@ -23,7 +23,7 @@
 from PyQt5 import QtCore, QtWidgets, QtGui 
 
 from spectrointerface.comm.USBCommunicator import USBCommunicator
-from spectrointerface.comm.dataReader import DataReader
+from spectrointerface.comm.DataReader import DataReader
 
 from spectrointerface.gui.SpectroGraph import SpectroGraph
 from spectrointerface.gui.Menu import MainMenu
