@@ -115,20 +115,11 @@ class CalibrateMenu(Menu):
         super().__init__(mainMenu,apw)
 
         ### New calibration button
-        newCalibrationButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-new"),'New calibration',apw)
+        newCalibrationButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-new"),'Set calibration',apw)
         newCalibrationButton.setShortcut('Ctrl+N')
-        newCalibrationButton.setStatusTip('Create a new calibration table')
-
-        ### Load calibration table button
-        loadCalibrationButton = QtWidgets.QAction(QtGui.QIcon.fromTheme("document-open"),'Load calibration table',apw)
-        loadCalibrationButton.setShortcut('Ctrl+L')
-        loadCalibrationButton.setStatusTip('Load an existing calibration table')
+        newCalibrationButton.setStatusTip('Create/load new calibration table')
 
         self._menu.addAction(newCalibrationButton)
-        self._menu.addAction(loadCalibrationButton)
 
         self._buttonList["newCalibration"] = newCalibrationButton
-        self._buttonList["loadCalibration"] = loadCalibrationButton
-
-
 
