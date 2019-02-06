@@ -57,7 +57,6 @@ class SnaptoCursor(object):
     """
 
     __calibration_table = None
-
     def __init__(self, ax, x, y, canvas):
         self.ax = ax
         self.canvas = canvas
@@ -80,7 +79,7 @@ class SnaptoCursor(object):
         x = self.x[indx]
         y = self.y[indx]
         try: 
-            wl = self.__calibration_table[indx,1]
+            wl = self.__calibration_table[indx]
         except:
             wl = None
         
@@ -90,7 +89,7 @@ class SnaptoCursor(object):
         self.ly.set_xdata(x)
         
         try:
-            self.txt.set_text('Pixel=%1.2f, Value=%1.2f, Wl=%1.2f' % (x, y, wl))
+            self.txt.set_text('Pixel=%1.2f, Value=%1.2f\nWl=%1.2f nm' % (x, y, wl))
         except:
             self.txt.set_text('Pixel=%1.2f, Value=%1.2f' % (x, y))
 
@@ -106,8 +105,6 @@ class SnaptoCursor(object):
 
 class SpectroGraph(MplCanvas):
     """A canvas that updates itself with a new plot."""
-
-    __calibration_table = None
 
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         MplCanvas.__init__(self,parent,width,height,dpi)
@@ -132,6 +129,7 @@ class SpectroGraph(MplCanvas):
         self.draw()
         self.flush_events()
 
+    # Calibration is stored in the cursor object
     def setCalibrationTable(self,calibration_table):
-        self.__calibration_table = np.copy(calibration_table)
+        self.cursor.setCalibrationTable(calibration_table)
 
