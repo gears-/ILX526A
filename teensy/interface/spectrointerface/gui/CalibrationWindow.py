@@ -117,7 +117,7 @@ class CalibrationWindow(QtWidgets.QWidget):
     __calibrated = False
     
 
-    def __init__(self,App):
+    def __init__(self,qApp):
         QtWidgets.QWidget.__init__(self)
 
         self.initUI()
@@ -128,7 +128,7 @@ class CalibrationWindow(QtWidgets.QWidget):
             self.initCalVec()
 
         # Store a pointer to our parent app
-        self.__apw = App
+        self.__app = qApp
 
 
     def initUI(self):
@@ -282,11 +282,19 @@ class CalibrationWindow(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def onFinishClick(self):
-        # Make sure we calculate, even if it is unnecessary
+        ### Make sure we calculate, even if it is unnecessary
         self.onCalculateClick()
 
-        # Ensure that we store the calibration state
+        ### Ensure that we store the calibration state
         self.__calibrated = True
+
+        ### Propagate the calibration table to the graph
+        # The application window
+        apw = self.__app.apw
+        # Spectrograph updates its calibration table
+        apw._dc.setCalibrationTable(self.calibration_table)
+        # Force a graph refresh
+        apw._dc.updateFigure(np.zeros(3000))
         
         # Then quit
         self.close()
